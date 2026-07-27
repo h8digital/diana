@@ -1,0 +1,415 @@
+/* Diana Dutra — visual enhancement layer: glassmorphism, glow, neon, motion. */
+
+:root {
+  --navy-deep: #01152f;
+  --navy: #022c60;
+  --navy-light: #0f4488;
+  --gold: #ffdd5a;
+  --gold-deep: #e8b923;
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-bg-strong: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--navy-deep);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  scrollbar-color: var(--gold-deep) var(--navy-deep);
+}
+body::-webkit-scrollbar {
+  width: 11px;
+}
+body::-webkit-scrollbar-track {
+  background: var(--navy-deep);
+}
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--gold), var(--gold-deep));
+  border-radius: 10px;
+  border: 2px solid var(--navy-deep);
+}
+
+/* ---------- Ambient background: fixed glow orbs behind every section ---------- */
+
+.wow-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--navy-deep);
+}
+
+.wow-bg .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  will-change: transform;
+}
+
+.wow-bg .orb-a {
+  width: 62vw;
+  height: 62vw;
+  max-width: 900px;
+  max-height: 900px;
+  top: -18vw;
+  left: -14vw;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 221, 90, 0.22) 0%, rgba(255, 221, 90, 0.06) 42%, transparent 72%);
+  animation: driftA 34s ease-in-out infinite alternate;
+}
+
+.wow-bg .orb-b {
+  width: 50vw;
+  height: 50vw;
+  max-width: 760px;
+  max-height: 760px;
+  bottom: -16vw;
+  right: -12vw;
+  background: radial-gradient(circle at 60% 60%, rgba(15, 68, 136, 0.55) 0%, rgba(15, 68, 136, 0.18) 45%, transparent 74%);
+  animation: driftB 40s ease-in-out infinite alternate;
+}
+
+.wow-bg .orb-c {
+  width: 38vw;
+  height: 38vw;
+  max-width: 560px;
+  max-height: 560px;
+  top: 38%;
+  left: 55%;
+  background: radial-gradient(circle, rgba(255, 221, 90, 0.14) 0%, transparent 70%);
+  animation: driftC 26s ease-in-out infinite alternate;
+}
+
+.wow-bg .orb-d {
+  width: 44vw;
+  height: 44vw;
+  max-width: 620px;
+  max-height: 620px;
+  top: 68%;
+  left: -10vw;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+  animation: driftD 30s ease-in-out infinite alternate;
+}
+
+@keyframes driftA {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(4vw, 6vw) scale(1.08); }
+}
+@keyframes driftB {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-5vw, -4vw) scale(1.1); }
+}
+@keyframes driftC {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-6vw, 4vw); }
+}
+@keyframes driftD {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(5vw, -5vw); }
+}
+
+/* Let the orbs glow through every section instead of sitting behind flat opaque navy. */
+.elementor-3800 { position: relative; z-index: 1; }
+
+.elementor-element-7052f6d,
+.elementor-element-5e51f86,
+.elementor-element-4682808,
+.elementor-element-6c6b964,
+.elementor-element-ff64240,
+.elementor-element-2b10efb,
+.elementor-element-aa64e09,
+.elementor-element-3b80aa1,
+.elementor-element-846cdeb,
+.elementor-element-04ed603,
+.elementor-element-281a821,
+.elementor-element-278b7c0,
+.elementor-element-ec8d2e5 {
+  background-color: rgba(2, 44, 96, 0.72) !important;
+}
+
+.elementor-element-7052f6d:not(.elementor-motion-effects-element-type-background) {
+  background-blend-mode: normal;
+}
+
+/* ---------- Glassmorphism cards ---------- */
+
+.glass-card {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease, border-color 0.45s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 221, 90, 0.35);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.4), 0 0 32px rgba(255, 221, 90, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Stats row */
+.elementor-element-6ed6a28,
+.elementor-element-2e7b461,
+.elementor-element-2674459,
+.elementor-element-e92893b {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow);
+  padding: 28px 18px !important;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease, border-color 0.45s ease;
+}
+.elementor-element-6ed6a28:hover,
+.elementor-element-2e7b461:hover,
+.elementor-element-2674459:hover,
+.elementor-element-e92893b:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 221, 90, 0.4) !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.4), 0 0 34px rgba(255, 221, 90, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.elementor-element-0cc2823 p,
+.elementor-element-5a6d896 p,
+.elementor-element-3502792 p {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: clamp(24px, 2.6vw, 32px);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 26px rgba(255, 221, 90, 0.28);
+}
+
+/* Form container */
+.elementor-element-3889fd6 .elementor-widget-container {
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  border-radius: 26px;
+  box-shadow: var(--glass-shadow);
+  padding: 34px 28px !important;
+}
+.elementor-element-3889fd6 .elementor-field-textual {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+.elementor-element-3889fd6 .elementor-field-textual:focus {
+  outline: none;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 4px rgba(255, 221, 90, 0.25), 0 0 24px rgba(255, 221, 90, 0.3) !important;
+  transform: translateY(-2px);
+}
+
+/* Pull-quote block (originally had a thin red border) */
+.elementor-element-9f13791 > .elementor-widget-container {
+  border-color: rgba(255, 221, 90, 0.45) !important;
+  background: var(--glass-bg);
+  border-radius: 14px;
+  box-shadow: 0 0 24px rgba(255, 221, 90, 0.12);
+}
+
+/* Testimonial + about text blocks */
+.elementor-element-14f0d13,
+.elementor-element-32b618b {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow);
+  padding: 32px !important;
+}
+
+/* Icon lists -> glass pills */
+.elementor-element-fcf72c4 .elementor-icon-list-item,
+.elementor-element-ffc51c3 .elementor-icon-list-item {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease, background 0.35s ease;
+}
+.elementor-element-fcf72c4 .elementor-icon-list-item:hover,
+.elementor-element-ffc51c3 .elementor-icon-list-item:hover {
+  transform: translateX(6px);
+  border-color: rgba(255, 221, 90, 0.4);
+  background: var(--glass-bg-strong);
+}
+.elementor-element-fcf72c4 .elementor-icon-list-icon i,
+.elementor-element-ffc51c3 .elementor-icon-list-icon i {
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 221, 90, 0.55);
+}
+
+/* Footer menu links */
+.elementor-element-591df26 a {
+  color: var(--gold) !important;
+  text-decoration: none !important;
+  transition: color 0.25s ease, padding-left 0.25s ease;
+  display: inline-block;
+}
+.elementor-element-591df26 a:hover {
+  color: #fff !important;
+  padding-left: 4px;
+}
+
+/* Footer columns */
+.elementor-element-edcced8,
+.elementor-element-5e50f51,
+.elementor-element-42afb55,
+.elementor-element-4f43d01 {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 26px !important;
+}
+
+/* Map frame */
+.elementor-element-0ed9283 .elementor-custom-embed {
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ---------- Neon gold highlights ---------- */
+
+span[style*="FFDD5A"] {
+  text-shadow: 0 0 18px rgba(255, 221, 90, 0.55), 0 0 42px rgba(255, 221, 90, 0.25);
+}
+
+.elementor-divider-separator {
+  border-top-color: rgba(255, 221, 90, 0.4) !important;
+  box-shadow: 0 0 14px rgba(255, 221, 90, 0.35);
+}
+
+/* ---------- Neon CTA buttons ---------- */
+
+.elementor-button {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%) !important;
+  color: var(--navy-deep) !important;
+  fill: var(--navy-deep) !important;
+  text-shadow: none !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 rgba(255, 221, 90, 0.5);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, filter 0.35s ease;
+}
+.elementor-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.7s ease;
+}
+.elementor-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35), 0 0 30px rgba(255, 221, 90, 0.55);
+}
+.elementor-button:hover::before {
+  left: 130%;
+}
+
+/* Primary lead-capture button gets a persistent pulse — it's the whole point of the page. */
+#formulario .elementor-button {
+  animation: ctaPulse 2.6s ease-in-out infinite;
+}
+@keyframes ctaPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 rgba(255, 221, 90, 0.5); }
+  50% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), 0 0 36px rgba(255, 221, 90, 0.65); }
+}
+
+/* WhatsApp floating button — attention ring */
+.elementor-social-icon-whatsapp {
+  position: relative;
+  background-color: #25d366 !important;
+}
+.elementor-social-icon-whatsapp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55);
+  animation: waPulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes waPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); }
+  70%  { box-shadow: 0 0 0 18px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+/* ---------- Diana's photos: soft glow frame instead of a hard cutout ---------- */
+
+.elementor-element-34dbbf5 img,
+.elementor-element-fab517f img {
+  filter: drop-shadow(0 18px 30px rgba(1, 10, 26, 0.4)) drop-shadow(0 0 60px rgba(255, 221, 90, 0.08));
+  animation: floatPhoto 7s ease-in-out infinite;
+}
+@keyframes floatPhoto {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ---------- Scroll reveal ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .wow-bg .orb,
+  .elementor-button::before,
+  #formulario .elementor-button,
+  .elementor-social-icon-whatsapp::after,
+  .elementor-element-34dbbf5 img,
+  .elementor-element-fab517f img {
+    animation: none !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .wow-bg .orb { filter: none; }
+  .elementor-element-3889fd6 .elementor-widget-container,
+  .elementor-element-14f0d13,
+  .elementor-element-32b618b,
+  .elementor-element-edcced8,
+  .elementor-element-5e50f51,
+  .elementor-element-42afb55,
+  .elementor-element-4f43d01 {
+    padding: 22px !important;
+    border-radius: 18px;
+  }
+}
