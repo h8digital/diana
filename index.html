@@ -93,18 +93,14 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 <script src="wp-includes/js/jquery/jquery-migrate.min.js" id="jquery-migrate-js"></script>
 <script src="wp-content/plugins/elementor/assets/lib/font-awesome/js/v4-shims.min.js" id="font-awesome-4-shim-js"></script>
 
-<!-- Snippet da tag do Google (gtag.js) adicionado pelo Site Kit -->
-<!-- Snippet do Google Analytics adicionado pelo Site Kit -->
-<!-- Snippet do Google Anúncios adicionado pelo Site Kit -->
-<script src="https://www.googletagmanager.com/gtag/js?id=GT-KTT532DR" id="google_gtagjs-js" async></script>
+<!-- Google tag (gtag.js) - GA4 + Google Ads -->
+<script src="https://www.googletagmanager.com/gtag/js?id=__GA4_ID__" id="google_gtagjs-js" async></script>
 <script id="google_gtagjs-js-after">
 window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}
-gtag("set","linker",{"domains":["dianainvestimentos.com.br"]});
 gtag("js", new Date());
-gtag("set", "developer_id.dZTNiMT", true);
-gtag("config", "GT-KTT532DR");
-gtag("config", "AW-16529273619");
- window._googlesitekit = window._googlesitekit || {}; window._googlesitekit.throttledEvents = []; window._googlesitekit.gtagEvent = (name, data) => { var key = JSON.stringify( { name, data } ); if ( !! window._googlesitekit.throttledEvents[ key ] ) { return; } window._googlesitekit.throttledEvents[ key ] = true; setTimeout( () => { delete window._googlesitekit.throttledEvents[ key ]; }, 5 ); gtag( "event", name, { ...data, event_source: "site-kit" } ); }; 
+gtag("config", "__GA4_ID__");
+gtag("config", "__GADS_ID__");
+window.__TRACKING_IDS__ = { ga4: "__GA4_ID__", gads: "__GADS_ID__", fbPixel: "__FB_PIXEL_ID__" };
 //# sourceURL=google_gtagjs-js-after
 </script>
 <link rel="https://api.w.org/" href="https://www.dianadutrainvestimentos.com.br/wp-json/" /><link rel="alternate" title="JSON" type="application/json" href="https://www.dianadutrainvestimentos.com.br/wp-json/wp/v2/pages/3800" /><link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://www.dianadutrainvestimentos.com.br/xmlrpc.php?rsd" />
@@ -121,11 +117,11 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1469240864276633');
+fbq('init', '__FB_PIXEL_ID__');
 fbq('track', 'PageView');
 </script>
 <noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1469240864276633&ev=PageView&noscript=1"
+src="https://www.facebook.com/tr?id=__FB_PIXEL_ID__&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
 <!-- /end HFCM by 99 Robots -->
@@ -133,9 +129,6 @@ src="https://www.facebook.com/tr?id=1469240864276633&ev=PageView&noscript=1"
 <meta name="google-site-verification" content="FSl9mBiEbXynkg1rNcbn1TTw8TlHov3DXx45wCeyD8M" />
 <!-- /end HFCM by 99 Robots -->
 <meta name="generator" content="Elementor 4.0.1; features: additional_custom_breakpoints; settings: css_print_method-external, google_font-enabled, font_display-auto">
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s);j.async=true;j.src="https://stape.dianainvestimentos.com.br/1menkruxhq.js?"+i;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','eihpzsfx=aWQ9R1RNLU1QWEtXOFpK&page=1');</script>
-<!-- End Google Tag Manager -->
 			<style>
 				.e-con.e-parent:nth-of-type(n+4):not(.e-lazyloaded):not(.e-no-lazyload),
 				.e-con.e-parent:nth-of-type(n+4):not(.e-lazyloaded):not(.e-no-lazyload) * {
@@ -161,9 +154,6 @@ src="https://www.facebook.com/tr?id=1469240864276633&ev=PageView&noscript=1"
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <link rel="stylesheet" href="wp-content/custom/theme-glow.css" /></head>
 <body class="home wp-singular page-template page-template-elementor_canvas page page-id-3800 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-template-canvas elementor-kit-7 elementor-page elementor-page-3800">
-	<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://stape.dianainvestimentos.com.br/ns.html?id=GTM-MPXKW8ZJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
 		<div data-elementor-type="wp-page" data-elementor-id="3800" class="elementor elementor-3800" data-elementor-post-type="page">
 				<div class="elementor-element elementor-element-7052f6d e-flex e-con-boxed e-con e-parent" data-id="7052f6d" data-element_type="container" data-e-type="container" id="Inicio" data-settings="{&quot;background_background&quot;:&quot;classic&quot;}">
 					<div class="e-con-inner">
@@ -698,6 +688,7 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 //# sourceURL=wp-includes/js/wp-emoji-loader.min.js
 </script>
 <script src="wp-content/custom/theme-glow.js"></script>
+<script src="wp-content/custom/tracking.js"></script>
 	</body>
 </html>
 

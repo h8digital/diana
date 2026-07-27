@@ -5,6 +5,7 @@ package.json
 package-lock.json
 wrangler.jsonc
 wrangler.toml
+worker.js
 .git
 .gitignore
 .github
