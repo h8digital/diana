@@ -1,0 +1,10 @@
+node_modules
+package.json
+package-lock.json
+wrangler.jsonc
+wrangler.toml
+.git
+.gitignore
+.github
+CNAME
+README.md
