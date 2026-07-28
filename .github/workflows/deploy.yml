@@ -33,9 +33,15 @@ jobs:
         env:
           TOKEN_PIXEL_META: ${{ secrets.TOKEN_PIXEL_META }}
           PIXEL_FACEBOOK: ${{ secrets.PIXEL_FACEBOOK }}
+          CRM_USERNAME: ${{ secrets.CRM_USERNAME }}
+          CRM_PASSWORD: ${{ secrets.CRM_PASSWORD }}
+          CRM_SESSION_SECRET: ${{ secrets.CRM_SESSION_SECRET }}
         with:
           apiToken: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
           accountId: 30e1abd4edbb7e0f77cd94a5295470e4
           secrets: |
             TOKEN_PIXEL_META
             PIXEL_FACEBOOK
+            CRM_USERNAME
+            CRM_PASSWORD
+            CRM_SESSION_SECRET
