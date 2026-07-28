@@ -6,13 +6,19 @@ interface Props {
 	title?: string;
 	description?: string;
 	showWhatsApp?: boolean;
+	enableTracking?: boolean;
 }
 
-const { title = siteConfig.title, description = siteConfig.description, showWhatsApp = true } = Astro.props;
+const {
+	title = siteConfig.title,
+	description = siteConfig.description,
+	showWhatsApp = true,
+	enableTracking = true,
+} = Astro.props;
 
-const ga4Id = import.meta.env.PUBLIC_GA4_ID ?? '';
-const gadsId = import.meta.env.PUBLIC_GADS_ID ?? '';
-const fbPixelId = import.meta.env.PUBLIC_FB_PIXEL_ID ?? '';
+const ga4Id = enableTracking ? (import.meta.env.PUBLIC_GA4_ID ?? '') : '';
+const gadsId = enableTracking ? (import.meta.env.PUBLIC_GADS_ID ?? '') : '';
+const fbPixelId = enableTracking ? (import.meta.env.PUBLIC_FB_PIXEL_ID ?? '') : '';
 
 // The literal id must appear directly in `fbq('init', '...')` (not a JS variable
 // reference) - Meta's automated pixel-verification crawler pattern-matches the
