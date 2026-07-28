@@ -34,7 +34,7 @@ function normalizeBrPhone(raw) {
 	return digits.startsWith("55") ? digits : "55" + digits;
 }
 
-async function sendMetaConversion(env, { eventId, name, phone, objective, fbp, fbc, pageUrl, request }) {
+async function sendMetaConversion(env, { eventName, eventId, name, phone, objective, fbp, fbc, pageUrl, request }) {
 	if (!env.TOKEN_PIXEL_META || !env.PIXEL_FACEBOOK) return { ok: false, error: "not_configured" };
 
 	const phoneDigits = normalizeBrPhone(phone);
@@ -54,7 +54,7 @@ async function sendMetaConversion(env, { eventId, name, phone, objective, fbp, f
 	const payload = {
 		data: [
 			{
-				event_name: "Lead",
+				event_name: eventName || "Lead",
 				event_time: Math.floor(Date.now() / 1000),
 				event_id: eventId || crypto.randomUUID(),
 				action_source: "website",
@@ -102,7 +102,28 @@ async function handleLead(request, env) {
 		}
 	}
 
-	const metaResult = await sendMetaConversion(env, { eventId, name, phone, objective, fbp, fbc, pageUrl, request });
+	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, objective, fbp, fbc, pageUrl, request });
+	return json({ ok: true, meta: metaResult });
+}
+
+async function handleContact(request, env) {
+	let body;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ ok: false, error: "invalid_json" }, 400);
+	}
+
+	const { eventId, fbp, fbc, pageUrl, source } = body || {};
+	const metaResult = await sendMetaConversion(env, {
+		eventName: "Contact",
+		eventId,
+		objective: source,
+		fbp,
+		fbc,
+		pageUrl,
+		request,
+	});
 	return json({ ok: true, meta: metaResult });
 }
 
@@ -362,6 +383,10 @@ export default {
 
 		if (pathname === "/api/lead" && method === "POST") {
 			return handleLead(request, env);
+		}
+
+		if (pathname === "/api/contact" && method === "POST") {
+			return handleContact(request, env);
 		}
 
 		if (pathname === "/api/crm/login" && method === "POST") {

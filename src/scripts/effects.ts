@@ -1,3 +1,5 @@
+import { getCookie, uuid } from './tracking';
+
 export {};
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -95,10 +97,52 @@ function setupHeroParallax(): void {
 	);
 }
 
+function setupWhatsAppContactTracking(): void {
+	const firedForElement = new WeakSet<Element>();
+
+	document.addEventListener(
+		'click',
+		(event) => {
+			const target = event.target as Element | null;
+			const link = target?.closest<HTMLAnchorElement>('a[href*="wa.me"], a[href*="api.whatsapp.com"], a[href*="whatsapp.com"]');
+			if (!link) return;
+
+			// A single click can bubble through nested elements only once per link, but
+			// guard anyway in case something re-dispatches synthetic click events.
+			if (firedForElement.has(link)) return;
+			firedForElement.add(link);
+
+			const eventId = uuid();
+
+			if (typeof window.gtag === 'function') {
+				window.gtag('event', 'contact', { method: 'whatsapp', event_id: eventId });
+			}
+			if (typeof window.fbq === 'function') {
+				window.fbq('track', 'Contact', {}, { eventID: eventId });
+			}
+
+			fetch('/api/contact', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				keepalive: true,
+				body: JSON.stringify({
+					eventId,
+					source: 'whatsapp',
+					fbp: getCookie('_fbp'),
+					fbc: getCookie('_fbc'),
+					pageUrl: window.location.href,
+				}),
+			}).catch(() => {});
+		},
+		true
+	);
+}
+
 function init(): void {
 	setupReveal();
 	setupCountUp();
 	setupHeroParallax();
+	setupWhatsAppContactTracking();
 }
 
 if (document.readyState === 'loading') {
