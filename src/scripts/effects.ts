@@ -138,11 +138,27 @@ function setupWhatsAppContactTracking(): void {
 	);
 }
 
+function setupTimeOnPageTracking(): void {
+	const thresholds = [15, 30, 60];
+
+	thresholds.forEach((seconds) => {
+		window.setTimeout(() => {
+			if (typeof window.fbq === 'function') {
+				window.fbq('trackCustom', 'TimeOnPage', { seconds });
+			}
+			if (typeof window.gtag === 'function') {
+				window.gtag('event', 'time_on_page', { seconds });
+			}
+		}, seconds * 1000);
+	});
+}
+
 function init(): void {
 	setupReveal();
 	setupCountUp();
 	setupHeroParallax();
 	setupWhatsAppContactTracking();
+	setupTimeOnPageTracking();
 }
 
 if (document.readyState === 'loading') {
