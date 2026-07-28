@@ -5,12 +5,12 @@ import { siteConfig } from '../lib/site-config';
 ---
 
 <header class="sticky top-0 z-30 border-b border-navy/10 bg-paper/90 backdrop-blur-md">
-	<div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-[22px]">
-		<a href="#inicio" class="flex items-center gap-3">
-			<Image src={logoMark} alt="Diana Dutra" class="h-9 w-auto" width={140} height={144} />
-			<div class="hidden leading-tight sm:block">
-				<p class="text-sm font-bold text-navy">Diana Dutra Investimentos</p>
-				<p class="text-[11px] font-medium text-navy-soft">Corretora Autorizada</p>
+	<div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-[22px] sm:gap-4 sm:px-6">
+		<a href="#inicio" class="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial sm:gap-3">
+			<Image src={logoMark} alt="Diana Dutra" class="h-8 w-auto shrink-0 sm:h-9" width={140} height={144} />
+			<div class="min-w-0 leading-tight">
+				<p class="truncate text-xs font-bold text-navy sm:text-sm">Diana Dutra Investimentos</p>
+				<p class="truncate text-[10px] font-medium text-navy-soft sm:text-[11px]">Corretora Autorizada</p>
 			</div>
 		</a>
 
@@ -24,7 +24,7 @@ import { siteConfig } from '../lib/site-config';
 
 		<a
 			href="#formulario"
-			class="rounded-full bg-gradient-to-br from-gold-deep to-gold px-7 py-3 text-sm font-bold text-navy shadow-md shadow-gold-deep/30 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold-deep/40"
+			class="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-br from-gold-deep to-gold px-4 py-2 text-xs font-bold text-navy shadow-md shadow-gold-deep/30 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold-deep/40 sm:px-7 sm:py-3 sm:text-sm"
 		>
 			Simular agora
 		</a>
