@@ -12,6 +12,19 @@ const { title = siteConfig.title, description = siteConfig.description } = Astro
 const ga4Id = import.meta.env.PUBLIC_GA4_ID ?? '';
 const gadsId = import.meta.env.PUBLIC_GADS_ID ?? '';
 const fbPixelId = import.meta.env.PUBLIC_FB_PIXEL_ID ?? '';
+
+// The literal id must appear directly in `fbq('init', '...')` (not a JS variable
+// reference) - Meta's automated pixel-verification crawler pattern-matches the
+// base code text and won't resolve a runtime variable.
+const fbPixelScript = fbPixelId
+	? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '${fbPixelId}');
+fbq('track', 'PageView');`
+	: '';
 ---
 
 <!DOCTYPE html>
@@ -65,18 +78,12 @@ const fbPixelId = import.meta.env.PUBLIC_FB_PIXEL_ID ?? '';
 		)}
 
 		{fbPixelId && (
-			<script define:vars={{ fbPixelId }}>
-				!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-				n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-				n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-				t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-				document,'script','https://connect.facebook.net/en_US/fbevents.js');
-				fbq('init', fbPixelId);
-				fbq('track', 'PageView');
-			</script>
-			<noscript>
-				<img height="1" width="1" style="display:none" src={`https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1`} />
-			</noscript>
+			<Fragment>
+				<script set:html={fbPixelScript} />
+				<noscript>
+					<img height="1" width="1" style="display:none" src={`https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1`} />
+				</noscript>
+			</Fragment>
 		)}
 	</head>
 	<body class="bg-paper text-navy">
