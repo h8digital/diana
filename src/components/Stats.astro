@@ -1,6 +1,9 @@
 ---
+import hsConsorcios from '../assets/images/hs-consorcios.png';
+import { Image } from 'astro:assets';
+
 const stats = [
-	{ value: '', label: 'Corretora autorizada', sub: 'HS Consórcios', isText: true },
+	{ value: '', label: 'Corretora autorizada', isText: true },
 	{ value: '600', label: 'clientes ativos', prefix: '+ ' },
 	{ value: '50', label: 'em créditos imobiliários vendidos', prefix: '+ ', suffix: ' milhões' },
 	{ value: '20', label: 'de experiência', prefix: '+ ', suffix: ' anos' },
@@ -17,7 +20,7 @@ const stats = [
 					{stat.isText ? (
 						<>
 							<p class="text-lg font-bold text-navy">{stat.label}</p>
-							<p class="mt-1 text-navy-soft">{stat.sub}</p>
+							<Image src={hsConsorcios} alt="HS Consórcios" class="mx-auto mt-2 h-8 w-auto" width={200} height={55} />
 						</>
 					) : (
 						<>
