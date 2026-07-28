@@ -1,0 +1,322 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import logoMark from '../../assets/images/logo-mark.png';
+
+const toc = [
+	{ href: '#acesso', label: '1. Acessando o CRM' },
+	{ href: '#quadro', label: '2. O quadro (Kanban)' },
+	{ href: '#leads', label: '3. De onde vêm os leads' },
+	{ href: '#cartao', label: '4. Abrindo um lead' },
+	{ href: '#mover', label: '5. Movendo entre etapas' },
+	{ href: '#totais', label: '6. Totais por etapa' },
+	{ href: '#etapas', label: '7. Criar/editar etapas' },
+	{ href: '#sair', label: '8. Saindo' },
+	{ href: '#dicas', label: '9. Boas práticas' },
+	{ href: '#problemas', label: '10. Problemas comuns' },
+];
+---
+
+<BaseLayout title="Manual do CRM | Diana Dutra Investimentos" showWhatsApp={false}>
+	<header class="sticky top-0 z-20 flex items-center gap-3.5 border-b border-navy/10 bg-paper/90 px-6 py-4 backdrop-blur-md">
+		<Image src={logoMark} alt="Diana Dutra Investimentos" class="h-8 w-auto" width={140} height={144} />
+		<div class="leading-tight">
+			<p class="font-heading text-[11px] font-semibold uppercase tracking-[0.12em] text-gold-deep">Diana Dutra Investimentos</p>
+			<p class="font-heading text-[15px] font-bold text-navy">Manual do CRM</p>
+		</div>
+		<a href="/crm" class="ml-auto rounded-full border border-navy/15 px-4 py-1.5 text-xs font-semibold text-navy transition-colors hover:bg-navy hover:text-white">
+			← Voltar ao CRM
+		</a>
+	</header>
+
+	<div class="mx-auto grid max-w-[1080px] grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-16 lg:py-14">
+		<nav class="hidden flex-col gap-0.5 lg:sticky lg:top-24 lg:flex lg:self-start" aria-label="Sumário">
+			<span class="mb-2.5 font-heading text-[11px] font-semibold uppercase tracking-[0.1em] text-navy-soft">Sumário</span>
+			{toc.map((item) => (
+				<a href={item.href} class="rounded-lg px-2.5 py-1.5 text-[13.5px] font-semibold text-navy-soft transition-colors hover:bg-mist hover:text-navy">
+					{item.label}
+				</a>
+			))}
+		</nav>
+
+		<main class="min-w-0">
+			<div class="mb-11">
+				<p class="mb-2.5 font-heading text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-deep">Guia de uso</p>
+				<h1 class="text-[28px] font-bold tracking-tight text-navy md:text-4xl">Como usar o CRM de leads</h1>
+				<p class="mt-3.5 max-w-[62ch] text-[17px] text-navy-soft">
+					O CRM é onde todo mundo que preenche o formulário do site cai automaticamente,
+					organizado num quadro que você controla — igual um Trello, mas feito sob medida
+					para acompanhar quem está interessado em consórcio, em que etapa da conversa está,
+					e quanto de crédito está em negociação com cada pessoa.
+				</p>
+				<div class="mt-5 flex flex-wrap gap-2.5">
+					<span class="inline-flex items-center gap-1.5 rounded-full border border-navy/10 bg-mist px-3.5 py-1.5 font-heading text-[12.5px] font-semibold text-navy-soft">
+						🔗 <code class="font-mono text-[12px] text-navy">dianadutrainvestimentos.com.br/crm</code>
+					</span>
+					<span class="inline-flex items-center gap-1.5 rounded-full border border-navy/10 bg-mist px-3.5 py-1.5 font-heading text-[12.5px] font-semibold text-navy-soft">
+						🔒 Acesso com usuário e senha
+					</span>
+				</div>
+			</div>
+
+			<section id="acesso" class="scroll-mt-24 pt-0">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">01</span>
+					<h2 class="text-[22px] font-bold text-navy">Acessando o CRM</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">O CRM fica num endereço separado do site, protegido por login — só quem tem usuário e senha entra.</p>
+
+				<ol class="flex flex-col gap-2.5">
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">1</span>
+						<p>Abra <strong class="font-semibold">dianadutrainvestimentos.com.br/crm</strong> no navegador.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">2</span>
+						<p>Digite seu <strong class="font-semibold">usuário</strong> e sua <strong class="font-semibold">senha</strong> nos campos da tela de login.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">3</span>
+						<p>Clique em <strong class="font-semibold">Entrar</strong>. O quadro de leads aparece na sequência.</p>
+					</li>
+				</ol>
+
+				<div class="mt-4 flex gap-3 rounded-xl border border-gold-deep/25 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">💡</span>
+					<p class="text-navy-soft"><strong class="text-navy">Dica:</strong> salve o endereço nos favoritos do navegador para não precisar digitar toda vez.</p>
+				</div>
+			</section>
+
+			<section id="quadro" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">02</span>
+					<h2 class="text-[22px] font-bold text-navy">O quadro (Kanban)</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">
+					Cada coluna é uma etapa do processo de venda. Cada cartão é uma pessoa interessada.
+					O quadro vem pronto com estas etapas — mas você pode mudar isso a qualquer momento (veja o capítulo 7):
+				</p>
+
+				<div class="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-3" role="img" aria-label="Exemplo do quadro com colunas Novo, Em contato e Fechado, cada uma com cartões de leads">
+					<div class="rounded-xl border border-navy/10 bg-mist p-2.5">
+						<div class="mb-2 flex items-center justify-between px-0.5 font-heading text-xs font-bold text-navy">
+							<span>Novo</span>
+							<span class="rounded-full bg-navy/10 px-2 py-0.5 text-[10px] font-semibold text-navy-soft">2</span>
+						</div>
+						<div class="mb-1.5 rounded-lg border border-navy/10 bg-white p-2 shadow-sm">
+							<p class="text-[11.5px] font-semibold text-navy">Marcos Silveira</p>
+							<p class="text-[10px] text-navy-soft">(51) 98123-4455</p>
+							<span class="mt-1 inline-block rounded-full bg-gold/25 px-1.5 py-0.5 text-[9.5px] font-semibold text-gold-deep">Imóvel</span>
+						</div>
+						<div class="rounded-lg border border-navy/10 bg-white p-2 shadow-sm">
+							<p class="text-[11.5px] font-semibold text-navy">Ana Beatriz</p>
+							<p class="text-[10px] text-navy-soft">(51) 99711-2200</p>
+							<span class="mt-1 inline-block rounded-full bg-gold/25 px-1.5 py-0.5 text-[9.5px] font-semibold text-gold-deep">Veículo</span>
+						</div>
+					</div>
+					<div class="rounded-xl border border-navy/10 bg-mist p-2.5">
+						<div class="mb-1 flex items-center justify-between px-0.5 font-heading text-xs font-bold text-navy">
+							<span>Em contato</span>
+							<span class="rounded-full bg-navy/10 px-2 py-0.5 text-[10px] font-semibold text-navy-soft">1</span>
+						</div>
+						<p class="mb-1.5 px-0.5 font-heading text-[10.5px] font-bold text-gold-deep">R$ 85.000,00</p>
+						<div class="rounded-lg border border-navy/10 bg-white p-2 shadow-sm">
+							<p class="text-[11.5px] font-semibold text-navy">Roberta Chaves</p>
+							<p class="text-[10px] text-navy-soft">(51) 98877-1122</p>
+							<span class="mt-1 inline-block rounded-full bg-gold/25 px-1.5 py-0.5 text-[9.5px] font-semibold text-gold-deep">Investimento</span>
+						</div>
+					</div>
+					<div class="rounded-xl border border-navy/10 bg-mist p-2.5">
+						<div class="mb-1 flex items-center justify-between px-0.5 font-heading text-xs font-bold text-navy">
+							<span>Fechado</span>
+							<span class="rounded-full bg-navy/10 px-2 py-0.5 text-[10px] font-semibold text-navy-soft">1</span>
+						</div>
+						<p class="mb-1.5 px-0.5 font-heading text-[10.5px] font-bold text-gold-deep">R$ 240.000,00</p>
+						<div class="rounded-lg border border-navy/10 bg-white p-2 shadow-sm">
+							<p class="text-[11.5px] font-semibold text-navy">Juliano Prado</p>
+							<p class="text-[10px] text-navy-soft">(51) 99234-8890</p>
+							<span class="mt-1 inline-block rounded-full bg-gold/25 px-1.5 py-0.5 text-[9.5px] font-semibold text-gold-deep">Imóvel</span>
+						</div>
+					</div>
+				</div>
+
+				<table class="w-full border-collapse text-sm">
+					<tr><th class="border-b border-navy/10 py-2.5 pr-3 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">Etapa</th><th class="border-b border-navy/10 py-2.5 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">Quando usar</th></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-semibold align-top">Novo</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Acabou de chegar pelo site — ainda ninguém falou com essa pessoa.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-semibold align-top">Em contato</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Você já iniciou a conversa, está entendendo a necessidade.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-semibold align-top">Qualificado</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Tem perfil e interesse reais, negociação em andamento.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-semibold align-top">Fechado</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Contrato assinado.</td></tr>
+					<tr><td class="py-2.5 pr-3 font-semibold align-top">Perdido</td><td class="py-2.5 align-top text-navy-soft">Não seguiu adiante — mas fica registrado, não se perde o histórico.</td></tr>
+				</table>
+			</section>
+
+			<section id="leads" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">03</span>
+					<h2 class="text-[22px] font-bold text-navy">De onde vêm os leads</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">
+					Você não precisa cadastrar ninguém manualmente. Toda vez que alguém preenche o
+					formulário no site (nome, WhatsApp e objetivo), um cartão novo aparece sozinho
+					na primeira coluna do quadro — pronto pra você atender.
+				</p>
+				<div class="flex gap-3 rounded-xl border border-navy/10 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">⚡</span>
+					<p class="text-navy-soft">Isso acontece em tempo real: assim que a pessoa envia o formulário, o cartão já está no CRM.</p>
+				</div>
+			</section>
+
+			<section id="cartao" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">04</span>
+					<h2 class="text-[22px] font-bold text-navy">Abrindo um lead</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">Clique em qualquer cartão para abrir os detalhes da pessoa e registrar o andamento da conversa.</p>
+
+				<div class="mb-6 max-w-[380px] rounded-2xl border border-navy/10 bg-white p-5 shadow-sm" role="img" aria-label="Exemplo de cartão de lead aberto, mostrando contato, botão do WhatsApp, valor do crédito e notas">
+					<div class="mb-3">
+						<p class="mb-1 font-heading text-[10.5px] font-bold uppercase tracking-wide text-navy-soft">Contato</p>
+						<p class="text-[14.5px] font-medium text-navy">Roberta Chaves · (51) 98877-1122</p>
+					</div>
+					<div class="mb-3">
+						<span class="inline-block rounded-full bg-[#25d366] px-3.5 py-1.5 text-[12.5px] font-semibold text-white">Abrir WhatsApp</span>
+					</div>
+					<div class="mb-3">
+						<p class="mb-1 font-heading text-[10.5px] font-bold uppercase tracking-wide text-navy-soft">Valor do crédito em negociação</p>
+						<p class="text-[14.5px] font-medium text-navy">R$ 85.000,00</p>
+					</div>
+					<div>
+						<p class="mb-1 font-heading text-[10.5px] font-bold uppercase tracking-wide text-navy-soft">Notas</p>
+						<p class="text-[13.5px] text-navy-soft">Quer avaliar cartas de imóvel entre 200 e 250 mil...</p>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Abrir WhatsApp</h3>
+						<p class="text-[14.5px] text-navy-soft">Leva direto para uma conversa com o número da pessoa, sem precisar copiar o telefone.</p>
+					</div>
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Valor do crédito</h3>
+						<p class="text-[14.5px] text-navy-soft">Preencha quando souber quanto essa pessoa está buscando — entra automaticamente no total da etapa.</p>
+					</div>
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Notas</h3>
+						<p class="text-[14.5px] text-navy-soft">Anotações livres: o que já foi conversado, próximos passos, objeções, o que for útil pra você lembrar.</p>
+					</div>
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Excluir lead</h3>
+						<p class="text-[14.5px] text-navy-soft">Remove o cartão permanentemente. Use só para contatos errados ou duplicados — é definitivo.</p>
+					</div>
+				</div>
+
+				<div class="mt-4 flex gap-3 rounded-xl border border-gold-deep/25 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">💡</span>
+					<p class="text-navy-soft">Depois de editar valor ou notas, clique em <strong class="text-navy">Salvar</strong> antes de fechar — senão as mudanças não ficam gravadas.</p>
+				</div>
+			</section>
+
+			<section id="mover" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">05</span>
+					<h2 class="text-[22px] font-bold text-navy">Movendo um lead entre etapas</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">
+					Clique no cartão, segure o clique, e arraste até a coluna certa — solte o botão do mouse
+					para confirmar. O cartão muda de etapa na hora, sem precisar salvar nada.
+				</p>
+				<div class="flex gap-3 rounded-xl border border-navy/10 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">🖱️</span>
+					<p class="text-navy-soft">É a mesma lógica de aplicativos como Trello: clicar, segurar, arrastar, soltar.</p>
+				</div>
+			</section>
+
+			<section id="totais" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">06</span>
+					<h2 class="text-[22px] font-bold text-navy">Totais por etapa</h2>
+				</div>
+				<p class="max-w-[58ch] text-navy-soft">
+					No topo de cada coluna aparece quantos leads ela tem e a soma do valor de crédito
+					de todos eles (quando preenchido). É um jeito rápido de ver, por exemplo, quanto
+					está "Qualificado" e prestes a fechar, sem abrir cartão por cartão.
+				</p>
+			</section>
+
+			<section id="etapas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">07</span>
+					<h2 class="text-[22px] font-bold text-navy">Criando e editando etapas</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">As colunas do quadro são totalmente ajustáveis ao seu processo — não precisa ficar preso ao padrão.</p>
+				<table class="w-full border-collapse text-sm">
+					<tr><th class="w-1/3 border-b border-navy/10 py-2.5 pr-3 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">Ação</th><th class="border-b border-navy/10 py-2.5 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">Como fazer</th></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Criar etapa nova</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Botão <strong class="text-navy">+ Nova etapa</strong>, no canto superior direito do quadro. Digite o nome e confirme.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Renomear etapa</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Clique no nome da etapa, no topo da coluna, e digite o novo nome.</td></tr>
+					<tr><td class="py-2.5 pr-3 font-medium align-top">Excluir etapa</td><td class="py-2.5 align-top text-navy-soft">Clique no <strong class="text-navy">✕</strong> no cabeçalho da coluna. Só funciona se a coluna estiver vazia — mova os leads antes.</td></tr>
+				</table>
+			</section>
+
+			<section id="sair" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">08</span>
+					<h2 class="text-[22px] font-bold text-navy">Saindo do CRM</h2>
+				</div>
+				<p class="max-w-[58ch] text-navy-soft">
+					Clique em <strong class="text-navy">Sair</strong>, no canto superior direito da tela, ao lado do seu nome de usuário.
+					Isso encerra a sessão — útil em computadores compartilhados.
+				</p>
+			</section>
+
+			<section id="dicas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">09</span>
+					<h2 class="text-[22px] font-bold text-navy">Boas práticas</h2>
+				</div>
+				<div class="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Não deixe acumular em "Novo"</h3>
+						<p class="text-[14.5px] text-navy-soft">Um lead novo esfria rápido — o ideal é responder no mesmo dia.</p>
+					</div>
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Preencha o valor assim que souber</h3>
+						<p class="text-[14.5px] text-navy-soft">Os totais por etapa só ficam úteis se o valor estiver preenchido nos cartões.</p>
+					</div>
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Use as notas como diário da conversa</h3>
+						<p class="text-[14.5px] text-navy-soft">Registrar o que foi dito evita repetir perguntas e ajuda a retomar de onde parou.</p>
+					</div>
+					<div class="rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">
+						<h3 class="mb-1.5 flex items-center gap-2 text-[14.5px] font-bold text-navy"><span class="h-2 w-2 shrink-0 rounded-full bg-gold"></span>Mova o cartão na hora</h3>
+						<p class="text-[14.5px] text-navy-soft">Atualizar a etapa assim que a conversa avança mantém o quadro confiável pra decisões rápidas.</p>
+					</div>
+				</div>
+			</section>
+
+			<section id="problemas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">10</span>
+					<h2 class="text-[22px] font-bold text-navy">Problemas comuns</h2>
+				</div>
+				<table class="w-full border-collapse text-sm">
+					<tr><th class="w-1/3 border-b border-navy/10 py-2.5 pr-3 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">Situação</th><th class="border-b border-navy/10 py-2.5 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">O que fazer</th></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Esqueci minha senha</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">A senha não tem redefinição automática — fale com o responsável técnico do site para receber uma nova.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">A tela de login não carrega</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Confira sua internet e recarregue a página. Se continuar, tente outro navegador.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Um lead não aparece no quadro</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Atualize a página (F5). Se o lead realmente não chegou, confirme com a pessoa se o envio do formulário no site funcionou.</td></tr>
+					<tr><td class="py-2.5 pr-3 font-medium align-top">Arrastei o cartão e ele voltou sozinho</td><td class="py-2.5 align-top text-navy-soft">Sinal de que a conexão caiu no meio da ação. Tente novamente com a internet estável.</td></tr>
+				</table>
+				<div class="mt-4 flex gap-3 rounded-xl border border-amber-700/25 bg-amber-50 p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">⚠️</span>
+					<p class="text-navy-soft"><strong class="text-navy">Excluir é definitivo.</strong> Não existe "lixeira" — ao excluir um lead ou uma etapa, não tem como recuperar.</p>
+				</div>
+			</section>
+		</main>
+	</div>
+
+	<footer class="mx-auto max-w-[1080px] px-6 pb-16">
+		<div class="flex flex-wrap justify-between gap-2.5 border-t border-navy/10 pt-5 text-[13px] text-navy-soft">
+			<span>Diana Dutra Investimentos — Manual interno do CRM</span>
+			<span>Dúvidas fora deste manual: fale com o responsável técnico do site.</span>
+		</div>
+	</footer>
+</BaseLayout>
