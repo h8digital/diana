@@ -224,7 +224,7 @@ function requireAuth(handler) {
 async function handleListLeads(request, env) {
 	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
 	const { results } = await env.DB.prepare(
-		"SELECT id, name, phone, objective, stage_id, notes, page_url, created_at, updated_at FROM leads ORDER BY created_at DESC"
+		"SELECT id, name, phone, objective, stage_id, notes, value, page_url, created_at, updated_at FROM leads ORDER BY created_at DESC"
 	).all();
 	return json({ ok: true, leads: results });
 }
@@ -247,6 +247,12 @@ async function handleUpdateLead(request, env, ctx, session, id) {
 	if (body.notes !== undefined) {
 		fields.push("notes = ?");
 		values.push(body.notes);
+	}
+	if (body.value !== undefined) {
+		const numericValue = Number(body.value);
+		if (!Number.isFinite(numericValue) || numericValue < 0) return json({ ok: false, error: "invalid_value" }, 400);
+		fields.push("value = ?");
+		values.push(numericValue);
 	}
 	if (fields.length === 0) return json({ ok: false, error: "no_fields" }, 400);
 

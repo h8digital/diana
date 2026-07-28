@@ -1,3 +1,5 @@
+import { maskCurrencyInput, parseCurrencyInput, formatBRL } from './currency-mask';
+
 interface Stage {
 	id: number;
 	name: string;
@@ -11,6 +13,7 @@ interface Lead {
 	objective: string | null;
 	stage_id: number;
 	notes: string | null;
+	value: number;
 	page_url: string | null;
 	created_at: string;
 	updated_at: string;
@@ -52,12 +55,16 @@ async function api<T = any>(path: string, options: RequestInit = {}): Promise<{ 
 
 // ---------- auth ----------
 
+function showUserBar(username: string): void {
+	$('crm-username').textContent = username;
+	$('crm-user-bar').classList.remove('hidden');
+	$('crm-user-bar').classList.add('flex');
+}
+
 async function checkSession(): Promise<boolean> {
 	const { status, data } = await api('/api/crm/me');
 	if (status === 200) {
-		$('crm-username').textContent = data.username || '';
-		$('crm-user-bar').classList.remove('hidden');
-		$('crm-user-bar').classList.add('flex');
+		showUserBar(data.username || '');
 		return true;
 	}
 	return false;
@@ -87,6 +94,7 @@ async function handleLoginSubmit(event: SubmitEvent): Promise<void> {
 		errorEl.classList.remove('hidden');
 		return;
 	}
+	showUserBar(username);
 	await bootBoard();
 }
 
@@ -107,6 +115,10 @@ function leadsForStage(stageId: number): Lead[] {
 	return leads.filter((l) => l.stage_id === stageId);
 }
 
+function stageTotal(stageId: number): number {
+	return leadsForStage(stageId).reduce((sum, lead) => sum + (lead.value || 0), 0);
+}
+
 function renderBoard(): void {
 	const board = $('crm-board');
 	board.innerHTML = '';
@@ -117,15 +129,19 @@ function renderBoard(): void {
 		column.dataset.stageId = String(stage.id);
 
 		const stageLeads = leadsForStage(stage.id);
+		const total = stageTotal(stage.id);
 
 		const header = document.createElement('div');
-		header.className = 'flex items-center justify-between gap-2 border-b border-navy/10 px-4 py-3';
+		header.className = 'border-b border-navy/10 px-4 py-3';
 		header.innerHTML = `
-			<span class="stage-name font-bold text-navy text-sm cursor-pointer" title="Clique para renomear">${escapeHtml(stage.name)}</span>
-			<div class="flex items-center gap-2">
-				<span class="rounded-full bg-navy/5 px-2 py-0.5 text-xs font-semibold text-navy-soft">${stageLeads.length}</span>
-				<button class="stage-delete text-navy-soft hover:text-red-600 text-xs" title="Excluir etapa">✕</button>
+			<div class="flex items-center justify-between gap-2">
+				<span class="stage-name font-bold text-navy text-sm cursor-pointer" title="Clique para renomear">${escapeHtml(stage.name)}</span>
+				<div class="flex items-center gap-2">
+					<span class="rounded-full bg-navy/5 px-2 py-0.5 text-xs font-semibold text-navy-soft">${stageLeads.length}</span>
+					<button class="stage-delete text-navy-soft hover:text-red-600 text-xs" title="Excluir etapa">✕</button>
+				</div>
 			</div>
+			${total > 0 ? `<p class="mt-1 text-xs font-semibold text-gold-deep">${formatBRL(total)}</p>` : ''}
 		`;
 		header.querySelector('.stage-name')?.addEventListener('click', () => renameStage(stage));
 		header.querySelector('.stage-delete')?.addEventListener('click', () => deleteStage(stage));
@@ -169,7 +185,10 @@ function renderCard(lead: Lead): HTMLElement {
 	card.innerHTML = `
 		<p class="text-sm font-semibold text-navy">${escapeHtml(lead.name)}</p>
 		<p class="mt-1 text-xs text-navy-soft">${escapeHtml(lead.phone)}</p>
-		${lead.objective ? `<span class="mt-2 inline-block rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-gold-deep">${escapeHtml(lead.objective)}</span>` : ''}
+		<div class="mt-2 flex flex-wrap items-center gap-1.5">
+			${lead.objective ? `<span class="inline-block rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-gold-deep">${escapeHtml(lead.objective)}</span>` : ''}
+			${lead.value > 0 ? `<span class="inline-block rounded-full bg-navy/5 px-2 py-0.5 text-[11px] font-semibold text-navy">${formatBRL(lead.value)}</span>` : ''}
+		</div>
 		<p class="mt-2 text-[11px] text-navy-soft/70">${formatDate(lead.created_at)}</p>
 	`;
 	card.addEventListener('dragstart', (e) => {
@@ -238,6 +257,7 @@ function openLeadModal(lead: Lead): void {
 	$('crm-modal-phone').textContent = lead.phone;
 	$('crm-modal-meta').textContent = `Objetivo: ${lead.objective || '—'} · Recebido em ${formatDate(lead.created_at)}`;
 	$<HTMLAnchorElement>('crm-modal-whatsapp').href = whatsappLink(lead.phone);
+	$<HTMLInputElement>('crm-modal-value').value = lead.value ? maskCurrencyInput(String(Math.round(lead.value * 100))) : '';
 	$<HTMLTextAreaElement>('crm-modal-notes').value = lead.notes || '';
 	$('crm-lead-modal').classList.remove('hidden');
 	$('crm-lead-modal').classList.add('flex');
@@ -249,14 +269,19 @@ function closeLeadModal(): void {
 	$('crm-lead-modal').classList.remove('flex');
 }
 
-async function saveLeadNotes(): Promise<void> {
+async function saveLead(): Promise<void> {
 	if (currentLeadId === null) return;
 	const notes = $<HTMLTextAreaElement>('crm-modal-notes').value;
-	const { status } = await api(`/api/crm/leads/${currentLeadId}`, { method: 'PATCH', body: JSON.stringify({ notes }) });
+	const value = parseCurrencyInput($<HTMLInputElement>('crm-modal-value').value);
+	const { status } = await api(`/api/crm/leads/${currentLeadId}`, { method: 'PATCH', body: JSON.stringify({ notes, value }) });
 	if (status === 200) {
 		const lead = leads.find((l) => l.id === currentLeadId);
-		if (lead) lead.notes = notes;
+		if (lead) {
+			lead.notes = notes;
+			lead.value = value;
+		}
 		closeLeadModal();
+		renderBoard();
 	}
 }
 
@@ -284,8 +309,13 @@ async function init(): Promise<void> {
 	$('crm-logout').addEventListener('click', handleLogout);
 	$('crm-add-stage').addEventListener('click', addStage);
 	$('crm-modal-close').addEventListener('click', closeLeadModal);
-	$('crm-modal-save').addEventListener('click', saveLeadNotes);
+	$('crm-modal-save').addEventListener('click', saveLead);
 	$('crm-modal-delete').addEventListener('click', deleteLead);
+
+	const valueInput = $<HTMLInputElement>('crm-modal-value');
+	valueInput.addEventListener('input', () => {
+		valueInput.value = maskCurrencyInput(valueInput.value);
+	});
 
 	const authenticated = await checkSession();
 	if (authenticated) {
