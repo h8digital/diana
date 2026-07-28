@@ -1,0 +1,37 @@
+---
+const stats = [
+	{ value: '', label: 'Corretora autorizada', sub: 'HS Consórcios', isText: true },
+	{ value: '600', label: 'clientes ativos', prefix: '+ ' },
+	{ value: '50', label: 'em créditos imobiliários vendidos', prefix: '+ ', suffix: ' milhões' },
+	{ value: '20', label: 'de experiência', prefix: '+ ', suffix: ' anos' },
+];
+---
+
+<section id="informacoes" class="py-16 md:py-24">
+	<div class="mx-auto max-w-6xl px-6">
+		<h2 class="reveal text-center text-2xl font-bold text-navy md:text-3xl">Informações relevantes</h2>
+
+		<div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+			{stats.map((stat) => (
+				<div class="reveal rounded-2xl border border-navy/10 bg-white p-7 text-center shadow-sm shadow-navy/5 transition-all hover:-translate-y-1 hover:border-gold-deep/40 hover:shadow-lg">
+					{stat.isText ? (
+						<>
+							<p class="text-lg font-bold text-navy">{stat.label}</p>
+							<p class="mt-1 text-navy-soft">{stat.sub}</p>
+						</>
+					) : (
+						<>
+							<p
+								data-count
+								class="bg-gradient-to-br from-gold-deep to-gold bg-clip-text text-3xl font-extrabold text-transparent md:text-4xl"
+							>
+								{stat.prefix}{stat.value}{stat.suffix}
+							</p>
+							<p class="mt-2 text-navy-soft">{stat.label}</p>
+						</>
+					)}
+				</div>
+			))}
+		</div>
+	</div>
+</section>

@@ -1,0 +1,120 @@
+<section id="formulario" class="relative bg-mist py-16 md:py-20">
+	<div class="reveal mx-auto max-w-2xl px-6">
+		<div class="rounded-3xl border border-navy/10 bg-white p-8 shadow-xl shadow-navy/5 md:p-10">
+			<h2 class="text-center text-2xl font-bold text-navy md:text-3xl">Peça sua simulação gratuita</h2>
+			<p class="mt-2 text-center text-navy-soft">Em poucos minutos você entende como transformar crédito em patrimônio.</p>
+
+			<form id="lead-form" class="mt-8 space-y-4" novalidate>
+				<div>
+					<label for="lead-name" class="sr-only">Nome</label>
+					<input
+						id="lead-name"
+						name="name"
+						type="text"
+						required
+						placeholder="Digite seu nome"
+						class="w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy placeholder:text-navy-soft/70 outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
+					/>
+				</div>
+				<div>
+					<label for="lead-phone" class="sr-only">WhatsApp</label>
+					<input
+						id="lead-phone"
+						name="phone"
+						type="tel"
+						required
+						placeholder="Digite seu WhatsApp"
+						pattern="[0-9()#&amp;+*\-=. ]+"
+						class="w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy placeholder:text-navy-soft/70 outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
+					/>
+				</div>
+				<div>
+					<label for="lead-objective" class="sr-only">Seu objetivo</label>
+					<select
+						id="lead-objective"
+						name="objective"
+						required
+						class="w-full appearance-none rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
+					>
+						<option value="Imóvel">Imóvel</option>
+						<option value="Veículo">Veículo</option>
+						<option value="Investimento">Investimento</option>
+					</select>
+				</div>
+
+				<button
+					type="submit"
+					class="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-gold to-gold-deep px-6 py-4 text-sm font-bold uppercase tracking-wide text-navy shadow-lg shadow-gold/30 transition-all hover:-translate-y-0.5 hover:shadow-xl"
+				>
+					<span class="relative">Quero transformar meu patrimônio agora!</span>
+				</button>
+
+				<p data-form-status role="status" class="hidden text-center text-sm font-medium"></p>
+			</form>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { fireLeadTracking, getCookie, uuid } from '../scripts/tracking';
+
+	function initLeadForm(): void {
+		const form = document.querySelector<HTMLFormElement>('#lead-form');
+		const status = document.querySelector<HTMLParagraphElement>('[data-form-status]');
+		if (!form || !status) return;
+
+		form.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			if (!form.checkValidity()) {
+				form.reportValidity();
+				return;
+			}
+
+			const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+			submitButton?.setAttribute('disabled', 'true');
+			status.classList.remove('hidden', 'text-red-600', 'text-emerald-600');
+			status.textContent = 'Enviando...';
+
+			const eventId = uuid();
+			const formData = new FormData(form);
+			const name = String(formData.get('name') ?? '');
+			const phone = String(formData.get('phone') ?? '');
+			const objective = String(formData.get('objective') ?? '');
+
+			fireLeadTracking(eventId, objective);
+
+			try {
+				const response = await fetch('/api/lead', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						eventId,
+						name,
+						phone,
+						objective,
+						fbp: getCookie('_fbp'),
+						fbc: getCookie('_fbc'),
+						pageUrl: window.location.href,
+					}),
+				});
+
+				if (!response.ok) throw new Error('request_failed');
+
+				status.textContent = 'Recebemos seus dados! Em breve a Diana entra em contato.';
+				status.classList.add('text-emerald-600');
+				form.reset();
+			} catch {
+				status.textContent = 'Não foi possível enviar agora. Tente novamente ou fale direto pelo WhatsApp.';
+				status.classList.add('text-red-600');
+			} finally {
+				submitButton?.removeAttribute('disabled');
+			}
+		});
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initLeadForm);
+	} else {
+		initLeadForm();
+	}
+</script>

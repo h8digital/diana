@@ -13,13 +13,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Inject tracking IDs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
         env:
-          ID_GA4: ${{ secrets.ID_GA4 }}
-          ID_GADS: ${{ secrets.ID_GADS }}
-          PIXEL_FACEBOOK: ${{ secrets.PIXEL_FACEBOOK }}
-        run: |
-          sed -i "s/__GA4_ID__/${ID_GA4}/g; s/__GADS_ID__/${ID_GADS}/g; s/__FB_PIXEL_ID__/${PIXEL_FACEBOOK}/g" index.html
+          PUBLIC_GA4_ID: ${{ secrets.ID_GA4 }}
+          PUBLIC_GADS_ID: ${{ secrets.ID_GADS }}
+          PUBLIC_FB_PIXEL_ID: ${{ secrets.PIXEL_FACEBOOK }}
+        run: npm run build
 
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v4

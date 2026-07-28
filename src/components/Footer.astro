@@ -1,0 +1,84 @@
+---
+import { siteConfig } from '../lib/site-config';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-navy text-white/80">
+	<div class="mx-auto max-w-6xl px-6 py-16">
+		<div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+			<div>
+				<h3 class="text-base font-bold text-white">{siteConfig.name}</h3>
+				<p class="mt-4 text-sm leading-relaxed">
+					Consultoria especializada em estratégias com consórcio para formação e alavancagem de
+					patrimônio.
+				</p>
+				<p class="mt-4 text-sm leading-relaxed">
+					Representante autorizada HS Consórcios. Atendimento presencial em Estância Velha/RS e
+					atendimento online no Brasil e exterior.
+				</p>
+			</div>
+
+			<div>
+				<h3 class="text-base font-bold text-white">Menu</h3>
+				<ul class="mt-4 space-y-2 text-sm">
+					{siteConfig.nav.map((item) => (
+						<li>
+							<a href={item.href} class="text-gold transition-colors hover:text-white">{item.label}</a>
+						</li>
+					))}
+				</ul>
+			</div>
+
+			<div>
+				<h3 class="text-base font-bold text-white">Endereço</h3>
+				<p class="mt-4 text-sm leading-relaxed">
+					{siteConfig.name}<br /><br />
+					{siteConfig.address.line1}<br />
+					{siteConfig.address.line2}<br />
+					{siteConfig.address.line3}<br /><br />
+					{siteConfig.address.city}<br />
+					{siteConfig.address.cep}<br /><br />
+					CNPJ: {siteConfig.address.cnpj}
+				</p>
+			</div>
+
+			<div>
+				<h3 class="text-base font-bold text-white">Contato</h3>
+				<p class="mt-4 text-sm leading-relaxed">
+					Telefone / WhatsApp<br />
+					{siteConfig.phoneDisplay}<br /><br />
+					Envie um e-mail para<br />
+					<a href={`mailto:${siteConfig.email}`} class="text-gold hover:text-white">{siteConfig.email}</a><br /><br />
+					Atendimento<br />
+					Segunda a Sexta<br />
+					08h às 18h
+				</p>
+			</div>
+		</div>
+
+		<div class="mt-14 border-t border-white/10 pt-8 text-center text-sm text-white/60">
+			<p>© {year} {siteConfig.name}</p>
+			<p>Todos os direitos reservados. Corretora autorizada HS Consórcios.</p>
+		</div>
+
+		<div class="mt-10 overflow-hidden rounded-2xl border border-white/10">
+			<iframe
+				src={siteConfig.address.mapsEmbedUrl}
+				title={`${siteConfig.address.line1} ${siteConfig.address.city}`}
+				loading="lazy"
+				class="h-72 w-full grayscale-0"
+			></iframe>
+		</div>
+		<div class="mt-6 text-center">
+			<a
+				href={siteConfig.address.mapsLink}
+				target="_blank"
+				rel="noopener"
+				class="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-navy transition-all hover:-translate-y-0.5 hover:bg-gold-deep"
+			>
+				Ver rotas no Google Maps
+			</a>
+		</div>
+	</div>
+</footer>

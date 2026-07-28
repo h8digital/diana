@@ -4,7 +4,7 @@
 	"main": "worker.js",
 	"compatibility_date": "2025-06-01",
 	"assets": {
-		"directory": "./",
+		"directory": "./dist",
 		"binding": "ASSETS",
 		"not_found_handling": "404-page"
 	}

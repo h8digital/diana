@@ -1,0 +1,39 @@
+---
+import { Image } from 'astro:assets';
+import testimonial1 from '../assets/images/testimonial-1.png';
+---
+
+<section id="depoimentos" class="bg-mist py-16 md:py-24">
+	<div class="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 md:grid-cols-2">
+		<div class="reveal order-2 flex justify-center md:order-1">
+			<Image
+				src={testimonial1}
+				alt="Depoimento de cliente via WhatsApp"
+				class="w-[280px] rounded-[2rem] shadow-2xl shadow-navy/20 md:w-[320px]"
+				width={320}
+				height={480}
+			/>
+		</div>
+
+		<div class="reveal order-1 md:order-2">
+			<h2 class="text-2xl font-bold text-navy md:text-3xl">Depoimento de quem decidiu conquistar.</h2>
+			<h3 class="mt-3 text-xl font-semibold text-navy md:text-2xl">
+				Quando a decisão certa encontra o suporte certo, <span class="bg-gradient-to-r from-gold-deep to-gold bg-clip-text text-transparent">o resultado é conquista de verdade.</span>
+			</h3>
+			<p class="mt-5 text-navy-soft">
+				Tenha liberdade para conquistar o que quiser: carro, imóvel, investimentos ou projetos
+				pessoais, com planejamento, segurança e sem juros.
+			</p>
+			<p class="mt-4 text-navy-soft">
+				Com a orientação certa, o consórcio deixa de ser uma promessa e se torna uma ferramenta
+				real para transformar planos em conquistas.
+			</p>
+			<a
+				href="#formulario"
+				class="mt-6 inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-navy-light hover:shadow-lg"
+			>
+				Quero um plano que funcione para mim!
+			</a>
+		</div>
+	</div>
+</section>

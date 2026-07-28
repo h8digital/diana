@@ -1,0 +1,51 @@
+---
+import { Image } from 'astro:assets';
+import dianaHero from '../assets/images/diana-hero.png';
+---
+
+<section id="inicio" class="relative overflow-hidden pt-14 pb-20 md:pt-20 md:pb-28">
+	<div
+		class="pointer-events-none absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full bg-gold/15 blur-3xl"
+		aria-hidden="true"
+	></div>
+	<div
+		class="pointer-events-none absolute -left-32 top-1/2 h-[26rem] w-[26rem] rounded-full bg-mist blur-3xl"
+		aria-hidden="true"
+	></div>
+
+	<div class="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 md:grid-cols-2">
+		<div class="reveal">
+			<h1 class="text-4xl font-extrabold leading-tight tracking-tight text-navy md:text-5xl">
+				Transforme seu crédito em <span class="bg-gradient-to-r from-gold-deep to-gold bg-clip-text text-transparent">patrimônio sólido</span> com estratégias de alavancagem que aceleram seus resultados
+			</h1>
+			<p class="mt-6 max-w-xl text-lg text-navy-soft">
+				Enxergue novas oportunidades para potencializar seu patrimônio e ouça o que minha
+				expertise de mais de duas décadas tem a dizer sobre o seu futuro. Sinta a segurança de
+				acelerar seus objetivos com inteligência e sem juros abusivos.
+			</p>
+			<a
+				href="#formulario"
+				class="mt-8 inline-flex items-center gap-2 rounded-full bg-navy px-7 py-3.5 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-navy/20 transition-all hover:-translate-y-0.5 hover:bg-navy-light hover:shadow-xl"
+			>
+				Quero minha simulação
+			</a>
+		</div>
+
+		<div class="reveal flex justify-center md:justify-end">
+			<div data-parallax class="relative">
+				<div
+					class="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-gold/20 via-mist to-transparent blur-2xl"
+					aria-hidden="true"
+				></div>
+				<Image
+					src={dianaHero}
+					alt="Diana Dutra"
+					class="relative w-[300px] drop-shadow-[0_25px_45px_rgba(14,24,60,0.25)] md:w-[380px]"
+					width={380}
+					height={676}
+					priority
+				/>
+			</div>
+		</div>
+	</div>
+</section>

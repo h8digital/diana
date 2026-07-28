@@ -1,0 +1,31 @@
+---
+const items = [
+	'Pessoas que planejam seus sonhos com antecedência',
+	'Quem prioriza pagar pelo valor justo da sua conquista',
+	'Para quem quer investir com inteligência',
+	'Famílias e profissionais com visão de médio e longo prazo',
+];
+---
+
+<section id="paraquem" class="py-16 md:py-24">
+	<div class="mx-auto max-w-3xl px-6 text-center">
+		<h2 class="reveal text-2xl font-bold text-navy md:text-3xl">Para quem é o consórcio?</h2>
+
+		<ul class="mt-8 space-y-3 text-left">
+			{items.map((item) => (
+				<li class="reveal flex items-center gap-3 rounded-xl border border-navy/10 bg-white px-5 py-4 shadow-sm shadow-navy/5 transition-all hover:border-gold-deep/40 hover:shadow-md">
+					<span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gold/20 text-gold-deep">
+						<svg viewBox="0 0 20 20" class="h-3.5 w-3.5 fill-current">
+							<path d="M7.629 13.233 3.4 9.005l1.414-1.414 2.815 2.814L14.586 3.5 16 4.914z"/>
+						</svg>
+					</span>
+					<span class="text-navy-soft">{item}</span>
+				</li>
+			))}
+		</ul>
+
+		<p class="reveal mt-8 text-navy-soft">
+			Se você tem um objetivo claro, o consórcio pode ser o caminho mais inteligente até lá.
+		</p>
+	</div>
+</section>

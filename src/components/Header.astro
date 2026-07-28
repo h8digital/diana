@@ -1,0 +1,30 @@
+---
+import logoMark from '../assets/images/logo-mark.png';
+import hsConsorcios from '../assets/images/hs-consorcios.png';
+import { Image } from 'astro:assets';
+import { siteConfig } from '../lib/site-config';
+---
+
+<header class="sticky top-0 z-30 border-b border-navy/10 bg-paper/90 backdrop-blur-md">
+	<div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+		<a href="#inicio" class="flex items-center gap-3">
+			<Image src={logoMark} alt="Diana Dutra" class="h-9 w-auto" width={140} height={144} />
+			<Image src={hsConsorcios} alt="HS Consórcios" class="h-6 w-auto" width={200} height={55} />
+		</a>
+
+		<nav class="hidden items-center gap-7 md:flex">
+			{siteConfig.nav.map((item) => (
+				<a href={item.href} class="text-sm font-medium text-navy/80 transition-colors hover:text-navy">
+					{item.label}
+				</a>
+			))}
+		</nav>
+
+		<a
+			href="#formulario"
+			class="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-navy-light hover:shadow-md"
+		>
+			Simular agora
+		</a>
+	</div>
+</header>
