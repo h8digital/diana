@@ -5,9 +5,10 @@ import { siteConfig, whatsappUrl } from '../lib/site-config';
 interface Props {
 	title?: string;
 	description?: string;
+	showWhatsApp?: boolean;
 }
 
-const { title = siteConfig.title, description = siteConfig.description } = Astro.props;
+const { title = siteConfig.title, description = siteConfig.description, showWhatsApp = true } = Astro.props;
 
 const ga4Id = import.meta.env.PUBLIC_GA4_ID ?? '';
 const gadsId = import.meta.env.PUBLIC_GADS_ID ?? '';
@@ -89,18 +90,20 @@ fbq('track', 'PageView');`
 	<body class="bg-paper text-navy">
 		<slot />
 
-		<a
-			href={whatsappUrl()}
-			target="_blank"
-			rel="noopener"
-			aria-label="Falar no WhatsApp"
-			class="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105"
-		>
-			<span class="absolute inset-0 rounded-full animate-ping bg-[#25d366]/60"></span>
-			<svg viewBox="0 0 32 32" class="relative h-7 w-7 fill-white">
-				<path d="M16.001 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.257.594 4.446 1.72 6.376L3.2 28.8l6.59-1.685a12.74 12.74 0 0 0 6.211 1.585h.006c7.06 0 12.8-5.74 12.8-12.8s-5.74-12.7-12.806-12.7zm0 23.36a10.5 10.5 0 0 1-5.362-1.47l-.385-.228-3.91 1.001 1.043-3.81-.25-.392a10.56 10.56 0 0 1-1.616-5.66c0-5.834 4.746-10.58 10.586-10.58 2.83 0 5.49 1.103 7.49 3.106a10.52 10.52 0 0 1 3.098 7.485c-.006 5.834-4.752 10.548-10.694 10.548zm5.807-7.914c-.318-.16-1.885-.93-2.177-1.036-.293-.106-.506-.16-.72.16-.213.319-.825 1.036-1.012 1.249-.187.213-.373.24-.692.08-.318-.16-1.344-.495-2.56-1.578-.946-.844-1.585-1.885-1.77-2.204-.187-.319-.02-.491.14-.65.144-.144.319-.373.478-.56.16-.187.213-.319.32-.532.106-.213.053-.4-.027-.56-.08-.16-.72-1.734-.986-2.375-.26-.624-.524-.54-.72-.55l-.613-.01c-.213 0-.56.08-.853.4-.293.319-1.117 1.09-1.117 2.66s1.144 3.083 1.303 3.296c.16.213 2.253 3.44 5.46 4.824.763.33 1.358.527 1.822.674.766.244 1.463.21 2.014.127.614-.092 1.885-.77 2.15-1.514.267-.744.267-1.382.187-1.514-.08-.133-.293-.213-.612-.373z"/>
-			</svg>
-		</a>
+		{showWhatsApp && (
+			<a
+				href={whatsappUrl()}
+				target="_blank"
+				rel="noopener"
+				aria-label="Falar no WhatsApp"
+				class="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105"
+			>
+				<span class="absolute inset-0 rounded-full animate-ping bg-[#25d366]/60"></span>
+				<svg viewBox="0 0 32 32" class="relative h-7 w-7 fill-white">
+					<path d="M16.001 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.257.594 4.446 1.72 6.376L3.2 28.8l6.59-1.685a12.74 12.74 0 0 0 6.211 1.585h.006c7.06 0 12.8-5.74 12.8-12.8s-5.74-12.7-12.806-12.7zm0 23.36a10.5 10.5 0 0 1-5.362-1.47l-.385-.228-3.91 1.001 1.043-3.81-.25-.392a10.56 10.56 0 0 1-1.616-5.66c0-5.834 4.746-10.58 10.586-10.58 2.83 0 5.49 1.103 7.49 3.106a10.52 10.52 0 0 1 3.098 7.485c-.006 5.834-4.752 10.548-10.694 10.548zm5.807-7.914c-.318-.16-1.885-.93-2.177-1.036-.293-.106-.506-.16-.72.16-.213.319-.825 1.036-1.012 1.249-.187.213-.373.24-.692.08-.318-.16-1.344-.495-2.56-1.578-.946-.844-1.585-1.885-1.77-2.204-.187-.319-.02-.491.14-.65.144-.144.319-.373.478-.56.16-.187.213-.319.32-.532.106-.213.053-.4-.027-.56-.08-.16-.72-1.734-.986-2.375-.26-.624-.524-.54-.72-.55l-.613-.01c-.213 0-.56.08-.853.4-.293.319-1.117 1.09-1.117 2.66s1.144 3.083 1.303 3.296c.16.213 2.253 3.44 5.46 4.824.763.33 1.358.527 1.822.674.766.244 1.463.21 2.014.127.614-.092 1.885-.77 2.15-1.514.267-.744.267-1.382.187-1.514-.08-.133-.293-.213-.612-.373z"/>
+				</svg>
+			</a>
+		)}
 
 		<script src="../scripts/effects.ts"></script>
 	</body>
