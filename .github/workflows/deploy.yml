@@ -36,6 +36,7 @@ jobs:
           CRM_USERNAME: ${{ secrets.USER_CRM }}
           CRM_PASSWORD: ${{ secrets.PASS_CRM }}
           CRM_SESSION_SECRET: ${{ secrets.CRM_SESSION_SECRET }}
+          LEADSTER_WEBHOOK_TOKEN: ${{ secrets.LEADSTER_WEBHOOK_TOKEN }}
         with:
           apiToken: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
           accountId: 30e1abd4edbb7e0f77cd94a5295470e4
@@ -45,3 +46,4 @@ jobs:
             CRM_USERNAME
             CRM_PASSWORD
             CRM_SESSION_SECRET
+            LEADSTER_WEBHOOK_TOKEN

@@ -129,6 +129,62 @@ async function handleContact(request, env) {
 	return json({ ok: true, meta: metaResult });
 }
 
+async function handleLeadsterWebhook(request, env, url) {
+	const token = url.searchParams.get("token");
+	if (!env.LEADSTER_WEBHOOK_TOKEN || token !== env.LEADSTER_WEBHOOK_TOKEN) {
+		return json({ ok: false, error: "unauthorized" }, 401);
+	}
+
+	let body;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ ok: false, error: "invalid_json" }, 400);
+	}
+
+	// Leadster posts a flat { name, phone, email, url } shape when the webhook's
+	// field mapping is configured; otherwise a nested { lead: {...} } shape.
+	const lead = body.lead || body || {};
+	const name = lead.name || lead.nome || "";
+	const phone = lead.phone || lead.telefone || "";
+	const email = lead.email || "";
+	const pageUrl = body.url || lead.url || undefined;
+
+	if (!name && !phone && !email) {
+		return json({ ok: false, error: "missing_fields" }, 400);
+	}
+
+	const leadName = name || email || "Lead via Leadster";
+	const eventId = crypto.randomUUID();
+
+	if (env.DB) {
+		try {
+			const firstStage = await env.DB.prepare("SELECT id FROM stages ORDER BY position ASC LIMIT 1").first();
+			if (firstStage) {
+				await env.DB.prepare(
+					"INSERT INTO leads (name, phone, objective, stage_id, notes, page_url, event_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+				)
+					.bind(leadName, phone || "", "leadster", firstStage.id, email ? `Email: ${email}` : null, pageUrl || null, eventId)
+					.run();
+			}
+		} catch (err) {
+			console.error("D1 insert failed (leadster)", err);
+		}
+	}
+
+	const metaResult = await sendMetaConversion(env, {
+		eventName: "Lead",
+		eventId,
+		name: leadName,
+		phone,
+		objective: "leadster",
+		pageUrl,
+		request,
+	});
+
+	return json({ ok: true, meta: metaResult });
+}
+
 // ---------- auth ----------
 
 function base64UrlEncode(bytes) {
@@ -389,6 +445,10 @@ export default {
 
 		if (pathname === "/api/contact" && method === "POST") {
 			return handleContact(request, env);
+		}
+
+		if (pathname === "/api/leadster-webhook" && method === "POST") {
+			return handleLeadsterWebhook(request, env, url);
 		}
 
 		if (pathname === "/api/crm/login" && method === "POST") {
