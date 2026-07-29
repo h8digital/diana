@@ -34,7 +34,7 @@ function normalizeBrPhone(raw) {
 	return digits.startsWith("55") ? digits : "55" + digits;
 }
 
-async function sendMetaConversion(env, { eventName, eventId, name, phone, objective, fbp, fbc, pageUrl, request }) {
+async function sendMetaConversion(env, { eventName, eventId, name, phone, objective, fbp, fbc, pageUrl, request, testEventCode }) {
 	if (!env.TOKEN_PIXEL_META || !env.PIXEL_FACEBOOK) return { ok: false, error: "not_configured" };
 
 	const phoneDigits = normalizeBrPhone(phone);
@@ -63,6 +63,7 @@ async function sendMetaConversion(env, { eventName, eventId, name, phone, object
 				custom_data: objective ? { content_name: objective } : undefined,
 			},
 		],
+		test_event_code: testEventCode || undefined,
 	};
 
 	try {
@@ -84,7 +85,7 @@ async function handleLead(request, env) {
 		return json({ ok: false, error: "invalid_json" }, 400);
 	}
 
-	const { eventId, name, phone, objective, fbp, fbc, pageUrl } = body || {};
+	const { eventId, name, phone, objective, fbp, fbc, pageUrl, testEventCode } = body || {};
 	if (!name || !phone) return json({ ok: false, error: "missing_fields" }, 400);
 
 	if (env.DB) {
@@ -102,7 +103,7 @@ async function handleLead(request, env) {
 		}
 	}
 
-	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, objective, fbp, fbc, pageUrl, request });
+	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, objective, fbp, fbc, pageUrl, request, testEventCode });
 	return json({ ok: true, meta: metaResult });
 }
 
@@ -114,7 +115,7 @@ async function handleContact(request, env) {
 		return json({ ok: false, error: "invalid_json" }, 400);
 	}
 
-	const { eventId, fbp, fbc, pageUrl, source } = body || {};
+	const { eventId, fbp, fbc, pageUrl, source, testEventCode } = body || {};
 	const metaResult = await sendMetaConversion(env, {
 		eventName: "Contact",
 		eventId,
@@ -123,6 +124,7 @@ async function handleContact(request, env) {
 		fbc,
 		pageUrl,
 		request,
+		testEventCode,
 	});
 	return json({ ok: true, meta: metaResult });
 }
