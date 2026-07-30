@@ -59,11 +59,16 @@ h1, h2, h3, h4 {
 	}
 }
 
+[data-carousel-track] {
+	transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+	will-change: transform;
+}
 .carousel-slide {
 	opacity: 0.3;
 	transform: scale(0.75);
 	filter: blur(1.5px);
-	transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), filter 0.7s ease;
+	transition: opacity 0.9s cubic-bezier(0.65, 0, 0.35, 1), transform 0.9s cubic-bezier(0.65, 0, 0.35, 1), filter 0.9s ease;
+	will-change: transform, opacity;
 }
 .carousel-slide.is-adjacent {
 	opacity: 0.55;
