@@ -97,6 +97,120 @@ function setupHeroParallax(): void {
 	);
 }
 
+function setupTestimonialCarousels(): void {
+	const roots = document.querySelectorAll<HTMLElement>('[data-carousel]');
+
+	roots.forEach((root) => {
+		const viewport = root.querySelector<HTMLElement>('[data-carousel-viewport]');
+		const track = root.querySelector<HTMLElement>('[data-carousel-track]');
+		const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-carousel-slide]'));
+		const dotsContainer = root.querySelector<HTMLElement>('[data-carousel-dots]');
+		const prevBtn = root.querySelector<HTMLButtonElement>('[data-carousel-prev]');
+		const nextBtn = root.querySelector<HTMLButtonElement>('[data-carousel-next]');
+		if (!viewport || !track || slides.length < 2) return;
+
+		let index = 0;
+		let timer: number | null = null;
+
+		const dots = slides.map((_, i) => {
+			const dot = document.createElement('button');
+			dot.type = 'button';
+			dot.className = 'carousel-dot';
+			dot.setAttribute('aria-label', `Ir para depoimento ${i + 1}`);
+			dot.addEventListener('click', () => goTo(i, true));
+			dotsContainer?.appendChild(dot);
+			return dot;
+		});
+
+		function render(): void {
+			slides.forEach((slide, i) => {
+				const offset = i - index;
+				slide.classList.toggle('is-active', offset === 0);
+				slide.classList.toggle('is-adjacent', Math.abs(offset) === 1);
+			});
+			dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
+
+			const slide = slides[index];
+			if (!slide || !viewport) return;
+			const viewportCenter = viewport.clientWidth / 2;
+			const slideCenter = slide.offsetLeft + slide.offsetWidth / 2;
+			if (track) track.style.transform = `translateX(${viewportCenter - slideCenter}px)`;
+		}
+
+		function goTo(i: number, userTriggered = false): void {
+			index = (i + slides.length) % slides.length;
+			render();
+			if (userTriggered) restartAutoplay();
+		}
+
+		function next(): void {
+			goTo(index + 1);
+		}
+		function prev(): void {
+			goTo(index - 1);
+		}
+
+		function startAutoplay(): void {
+			if (reduceMotion) return;
+			stopAutoplay();
+			timer = window.setInterval(next, 4500);
+		}
+		function stopAutoplay(): void {
+			if (timer !== null) {
+				window.clearInterval(timer);
+				timer = null;
+			}
+		}
+		function restartAutoplay(): void {
+			stopAutoplay();
+			startAutoplay();
+		}
+
+		prevBtn?.addEventListener('click', () => {
+			prev();
+			restartAutoplay();
+		});
+		nextBtn?.addEventListener('click', () => {
+			next();
+			restartAutoplay();
+		});
+
+		root.addEventListener('mouseenter', stopAutoplay);
+		root.addEventListener('mouseleave', startAutoplay);
+
+		let touchStartX = 0;
+		let touchDeltaX = 0;
+		viewport.addEventListener(
+			'touchstart',
+			(e) => {
+				touchStartX = e.touches[0]?.clientX ?? 0;
+				touchDeltaX = 0;
+				stopAutoplay();
+			},
+			{ passive: true }
+		);
+		viewport.addEventListener(
+			'touchmove',
+			(e) => {
+				touchDeltaX = (e.touches[0]?.clientX ?? touchStartX) - touchStartX;
+			},
+			{ passive: true }
+		);
+		viewport.addEventListener('touchend', () => {
+			if (Math.abs(touchDeltaX) > 40) {
+				if (touchDeltaX < 0) next();
+				else prev();
+			}
+			startAutoplay();
+		});
+
+		window.addEventListener('resize', render);
+
+		render();
+		startAutoplay();
+	});
+}
+
 function setupWhatsAppContactTracking(): void {
 	const firedForElement = new WeakSet<Element>();
 
@@ -157,6 +271,7 @@ function init(): void {
 	setupReveal();
 	setupCountUp();
 	setupHeroParallax();
+	setupTestimonialCarousels();
 	setupWhatsAppContactTracking();
 	setupTimeOnPageTracking();
 }

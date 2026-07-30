@@ -1,39 +1,67 @@
 ---
 import { Image } from 'astro:assets';
-import testimonial1 from '../assets/images/testimonial-1.webp';
+import testimonialAnaPaula from '../assets/images/testimonial-ana-paula.webp';
+import testimonialLarissa from '../assets/images/testimonial-larissa.webp';
+import testimonialViviane from '../assets/images/testimonial-viviane.webp';
+import testimonialBernardo from '../assets/images/testimonial-bernardo.webp';
+import testimonialPriscilla from '../assets/images/testimonial-priscilla.webp';
+
+const testimonials = [
+	{ src: testimonialAnaPaula, alt: 'Depoimento de Ana Paula sobre a experiência com a Diana Dutra', width: 508, height: 1100 },
+	{ src: testimonialLarissa, alt: 'Depoimento de Larissa sobre a experiência com a Diana Dutra', width: 508, height: 1100 },
+	{ src: testimonialViviane, alt: 'Depoimento de Viviane sobre a experiência com a Diana Dutra', width: 508, height: 1100 },
+	{ src: testimonialBernardo, alt: 'Depoimento de Bernardo sobre a experiência com a Diana Dutra', width: 745, height: 540 },
+	{ src: testimonialPriscilla, alt: 'Depoimento de Priscilla sobre a experiência com a Diana Dutra', width: 670, height: 540 },
+];
 ---
 
-<section id="depoimentos" class="bg-mist py-16 md:py-24">
-	<div class="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 md:grid-cols-2">
-		<div class="reveal order-2 flex justify-center md:order-1">
-			<Image
-				src={testimonial1}
-				alt="Depoimento de cliente via WhatsApp"
-				class="w-[240px] drop-shadow-[0_20px_35px_rgba(14,24,60,0.25)] md:w-[258px]"
-				width={258}
-				height={500}
-			/>
+<section id="depoimentos" class="overflow-hidden bg-mist py-16 md:py-24">
+	<div class="mx-auto max-w-3xl px-6 text-center">
+		<h2 class="reveal text-2xl font-bold text-navy md:text-3xl">Depoimento de quem decidiu conquistar.</h2>
+		<h3 class="reveal mt-3 text-xl font-semibold text-navy md:text-2xl">
+			Quando a decisão certa encontra o suporte certo, <span class="bg-gradient-to-r from-gold-deep to-gold bg-clip-text text-transparent">o resultado é conquista de verdade.</span>
+		</h3>
+	</div>
+
+	<div class="reveal relative mt-12" data-carousel>
+		<div class="mx-auto flex max-w-6xl items-center gap-1 px-2 sm:gap-4 sm:px-6">
+			<button type="button" data-carousel-prev aria-label="Depoimento anterior" class="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-navy/15 bg-white text-navy shadow-sm transition-all hover:-translate-y-0.5 hover:border-gold-deep/50 hover:shadow-md sm:flex">
+				<svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</button>
+
+			<div class="min-w-0 flex-1 overflow-hidden py-8" data-carousel-viewport>
+				<ul class="flex items-center" data-carousel-track>
+					{testimonials.map((t) => (
+						<li class="carousel-slide shrink-0 px-2 sm:px-3" data-carousel-slide>
+							<div class="relative flex h-[380px] w-[240px] items-center justify-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-white via-mist to-white shadow-2xl shadow-navy/15 sm:h-[440px] sm:w-[280px]">
+								<svg viewBox="0 0 24 24" class="pointer-events-none absolute -left-2 -top-3 h-20 w-20 fill-gold-deep/10" aria-hidden="true">
+									<path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.57-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-4v-10h10z"></path>
+								</svg>
+								<Image src={t.src} alt={t.alt} width={t.width} height={t.height} class="carousel-img relative h-full w-full object-contain" />
+							</div>
+						</li>
+					))}
+				</ul>
+			</div>
+
+			<button type="button" data-carousel-next aria-label="Próximo depoimento" class="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-navy/15 bg-white text-navy shadow-sm transition-all hover:-translate-y-0.5 hover:border-gold-deep/50 hover:shadow-md sm:flex">
+				<svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</button>
 		</div>
 
-		<div class="reveal order-1 md:order-2">
-			<h2 class="text-2xl font-bold text-navy md:text-3xl">Depoimento de quem decidiu conquistar.</h2>
-			<h3 class="mt-3 text-xl font-semibold text-navy md:text-2xl">
-				Quando a decisão certa encontra o suporte certo, <span class="bg-gradient-to-r from-gold-deep to-gold bg-clip-text text-transparent">o resultado é conquista de verdade.</span>
-			</h3>
-			<p class="mt-5 text-navy-soft">
-				Tenha liberdade para conquistar o que quiser: carro, imóvel, investimentos ou projetos
-				pessoais, com planejamento, segurança e sem juros.
-			</p>
-			<p class="mt-4 text-navy-soft">
-				Com a orientação certa, o consórcio deixa de ser uma promessa e se torna uma ferramenta
-				real para transformar planos em conquistas.
-			</p>
-			<a
-				href="#formulario"
-				class="mt-6 inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-navy-light hover:shadow-lg"
-			>
-				Quero um plano que funcione para mim!
-			</a>
-		</div>
+		<div class="mt-4 flex justify-center gap-2" data-carousel-dots></div>
+	</div>
+
+	<div class="mx-auto mt-10 max-w-2xl px-6 text-center">
+		<p class="reveal text-navy-soft">
+			Tenha liberdade para conquistar o que quiser: carro, imóvel, investimentos ou projetos
+			pessoais, com planejamento, segurança e sem juros.
+		</p>
+		<a
+			href="#formulario"
+			class="reveal mt-6 inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-navy-light hover:shadow-lg"
+		>
+			Quero um plano que funcione para mim!
+		</a>
 	</div>
 </section>
