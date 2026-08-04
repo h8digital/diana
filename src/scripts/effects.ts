@@ -97,6 +97,43 @@ function setupHeroParallax(): void {
 	);
 }
 
+function setupHeroDotSpotlight(): void {
+	if (reduceMotion) return;
+	const hero = document.querySelector<HTMLElement>('#inicio');
+	const layer = hero?.querySelector<HTMLElement>('[data-dot-spotlight]');
+	if (!hero || !layer) return;
+
+	let rafId = 0;
+	let x = 0;
+	let y = 0;
+
+	function apply(): void {
+		layer!.style.setProperty('--spot-x', `${x}px`);
+		layer!.style.setProperty('--spot-y', `${y}px`);
+		rafId = 0;
+	}
+
+	hero.addEventListener(
+		'pointermove',
+		(e) => {
+			const rect = hero.getBoundingClientRect();
+			x = e.clientX - rect.left;
+			y = e.clientY - rect.top;
+			layer!.style.opacity = '1';
+			if (!rafId) rafId = requestAnimationFrame(apply);
+		},
+		{ passive: true }
+	);
+
+	hero.addEventListener(
+		'pointerleave',
+		() => {
+			layer!.style.opacity = '0';
+		},
+		{ passive: true }
+	);
+}
+
 function setupTestimonialCarousels(): void {
 	const roots = document.querySelectorAll<HTMLElement>('[data-carousel]');
 
@@ -271,6 +308,7 @@ function init(): void {
 	setupReveal();
 	setupCountUp();
 	setupHeroParallax();
+	setupHeroDotSpotlight();
 	setupTestimonialCarousels();
 	setupWhatsAppContactTracking();
 	setupTimeOnPageTracking();
