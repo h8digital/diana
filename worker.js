@@ -1,3 +1,5 @@
+import { connect } from "cloudflare:sockets";
+
 const CORS_HEADERS = {
 	"Access-Control-Allow-Origin": "*",
 	"Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
@@ -77,7 +79,327 @@ async function sendMetaConversion(env, { eventName, eventId, name, phone, object
 	}
 }
 
-async function handleLead(request, env) {
+// ---------- settings ----------
+
+const DEFAULT_SETTINGS = {
+	lead_email_enabled: "0",
+	lead_email_to: "",
+	smtp_host: "",
+	smtp_port: "587",
+	smtp_secure: "starttls", // "starttls" (porta 587) ou "ssl" (porta 465)
+	smtp_user: "",
+	smtp_from: "",
+};
+
+// Editáveis pelo painel. A senha (smtp_pass) é tratada à parte: guardada
+// criptografada (smtp_pass_enc) e nunca devolvida ao navegador.
+const EDITABLE_SETTINGS = [
+	"lead_email_enabled",
+	"lead_email_to",
+	"smtp_host",
+	"smtp_port",
+	"smtp_secure",
+	"smtp_user",
+	"smtp_from",
+];
+
+const HIDDEN_SETTINGS = ["smtp_pass_enc"];
+
+async function getSettings(env) {
+	const settings = { ...DEFAULT_SETTINGS };
+	if (!env.DB) return settings;
+	try {
+		const { results } = await env.DB.prepare("SELECT key, value FROM settings").all();
+		for (const row of results || []) settings[row.key] = row.value;
+	} catch (err) {
+		console.error("settings read failed", err);
+	}
+	return settings;
+}
+
+function escapeHtml(value) {
+	return String(value ?? "").replace(
+		/[&<>"']/g,
+		(ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]
+	);
+}
+
+function splitAddresses(raw) {
+	return String(raw || "")
+		.split(/[,;\s]+/)
+		.map((s) => s.trim())
+		.filter(Boolean);
+}
+
+// ---------- secret encryption (AES-GCM, chave derivada de CRM_SESSION_SECRET) ----------
+
+async function deriveAesKey(secret) {
+	const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), "PBKDF2", false, ["deriveKey"]);
+	return crypto.subtle.deriveKey(
+		{ name: "PBKDF2", salt: new TextEncoder().encode("diana-crm/smtp/v1"), iterations: 100000, hash: "SHA-256" },
+		material,
+		{ name: "AES-GCM", length: 256 },
+		false,
+		["encrypt", "decrypt"]
+	);
+}
+
+async function encryptSecret(plain, secret) {
+	const key = await deriveAesKey(secret);
+	const iv = crypto.getRandomValues(new Uint8Array(12));
+	const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(plain)));
+	const combined = new Uint8Array(iv.length + ct.length);
+	combined.set(iv, 0);
+	combined.set(ct, iv.length);
+	return base64UrlEncode(combined);
+}
+
+async function decryptSecret(payload, secret) {
+	const key = await deriveAesKey(secret);
+	const raw = Uint8Array.from(base64UrlDecode(payload), (c) => c.charCodeAt(0));
+	const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(0, 12) }, key, raw.slice(12));
+	return new TextDecoder().decode(pt);
+}
+
+// ---------- SMTP client (Cloudflare Workers TCP sockets) ----------
+
+function utf8ToBase64(str) {
+	const bytes = new TextEncoder().encode(str);
+	let bin = "";
+	for (const b of bytes) bin += String.fromCharCode(b);
+	return btoa(bin);
+}
+
+function extractEmail(addr) {
+	const m = String(addr || "").match(/<([^>]+)>/);
+	return (m ? m[1] : String(addr || "")).trim();
+}
+
+function mimeEncodeHeader(str) {
+	return /^[\x20-\x7E]*$/.test(str) ? str : `=?UTF-8?B?${utf8ToBase64(str)}?=`;
+}
+
+function encodeFromHeader(from) {
+	const m = String(from || "").match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+	if (!m) return extractEmail(from);
+	const name = m[1].replace(/^"|"$/g, "").trim();
+	return name ? `${mimeEncodeHeader(name)} <${m[2].trim()}>` : `<${m[2].trim()}>`;
+}
+
+function buildMimeMessage({ from, to, subject, html, text }) {
+	const boundary = `_dc_${crypto.randomUUID().replace(/-/g, "")}`;
+	const wrap = (b64) => b64.replace(/(.{76})/g, "$1\r\n");
+	const headers = [
+		`From: ${encodeFromHeader(from)}`,
+		`To: ${to.join(", ")}`,
+		`Subject: ${mimeEncodeHeader(subject)}`,
+		`Date: ${new Date().toUTCString()}`,
+		`Message-ID: <${crypto.randomUUID()}@diana-crm>`,
+		"MIME-Version: 1.0",
+		`Content-Type: multipart/alternative; boundary="${boundary}"`,
+	];
+	const body = [
+		`--${boundary}`,
+		"Content-Type: text/plain; charset=UTF-8",
+		"Content-Transfer-Encoding: base64",
+		"",
+		wrap(utf8ToBase64(text)),
+		`--${boundary}`,
+		"Content-Type: text/html; charset=UTF-8",
+		"Content-Transfer-Encoding: base64",
+		"",
+		wrap(utf8ToBase64(html)),
+		`--${boundary}--`,
+		"",
+	];
+	return `${headers.join("\r\n")}\r\n\r\n${body.join("\r\n")}`;
+}
+
+function withTimeout(promise, ms, label) {
+	return Promise.race([
+		promise,
+		new Promise((_, reject) => setTimeout(() => reject(new Error(`${label}: tempo limite excedido (${ms}ms)`)), ms)),
+	]);
+}
+
+async function sendMailViaSmtp(config, mail) {
+	const port = Number(config.port) || 587;
+	const useTls = config.secure === "ssl" || config.secure === "tls" || port === 465;
+
+	let socket = connect(
+		{ hostname: config.host, port },
+		{ secureTransport: useTls ? "on" : "starttls", allowHalfOpen: false }
+	);
+
+	const encoder = new TextEncoder();
+	const decoder = new TextDecoder();
+	let writer = socket.writable.getWriter();
+	let reader = socket.readable.getReader();
+	let buffer = "";
+
+	async function readReply() {
+		for (;;) {
+			const lines = buffer.split("\r\n");
+			let consumed = 0;
+			for (let i = 0; i < lines.length - 1; i++) {
+				consumed += lines[i].length + 2;
+				if (/^\d{3} /.test(lines[i])) {
+					const replyText = buffer.slice(0, consumed);
+					buffer = buffer.slice(consumed);
+					return { code: parseInt(replyText, 10), text: replyText.trim() };
+				}
+			}
+			const { value, done } = await reader.read();
+			if (done) throw new Error("conexão SMTP encerrada inesperadamente");
+			buffer += decoder.decode(value, { stream: true });
+		}
+	}
+
+	async function command(line, okCodes, label) {
+		await writer.write(encoder.encode(`${line}\r\n`));
+		const reply = await readReply();
+		if (!okCodes.includes(reply.code)) {
+			throw new Error(`SMTP recusou ${label || line.split(" ")[0]}: ${reply.text}`);
+		}
+		return reply;
+	}
+
+	try {
+		const greeting = await readReply();
+		if (greeting.code !== 220) throw new Error(`saudação SMTP inesperada: ${greeting.text}`);
+
+		await command("EHLO diana-crm", [250], "EHLO");
+
+		if (!useTls) {
+			await command("STARTTLS", [220], "STARTTLS");
+			writer.releaseLock();
+			reader.releaseLock();
+			socket = socket.startTls();
+			writer = socket.writable.getWriter();
+			reader = socket.readable.getReader();
+			buffer = "";
+			await command("EHLO diana-crm", [250], "EHLO (TLS)");
+		}
+
+		await command("AUTH LOGIN", [334], "AUTH LOGIN");
+		await command(utf8ToBase64(config.user), [334], "usuário SMTP");
+		await command(utf8ToBase64(config.pass), [235], "autenticação SMTP");
+
+		await command(`MAIL FROM:<${extractEmail(config.from)}>`, [250], "MAIL FROM");
+		for (const rcpt of mail.to) {
+			await command(`RCPT TO:<${rcpt}>`, [250, 251], `RCPT TO ${rcpt}`);
+		}
+		await command("DATA", [354], "DATA");
+
+		const message = buildMimeMessage({ from: config.from, to: mail.to, subject: mail.subject, html: mail.html, text: mail.text });
+		await writer.write(encoder.encode(`${message.replace(/\r\n\./g, "\r\n..")}\r\n.\r\n`));
+		const sent = await readReply();
+		if (sent.code !== 250) throw new Error(`servidor rejeitou a mensagem: ${sent.text}`);
+
+		await command("QUIT", [221], "QUIT").catch(() => {});
+	} finally {
+		try { writer.releaseLock(); } catch {}
+		try { reader.releaseLock(); } catch {}
+		try { await socket.close(); } catch {}
+	}
+}
+
+// ---------- lead e-mail notifications ----------
+
+async function resolveSmtpConfig(env, settings) {
+	if (!env.CRM_SESSION_SECRET) return { ok: false, error: "CRM_SESSION_SECRET ausente no servidor." };
+	if (!settings.smtp_host || !settings.smtp_user || !settings.smtp_from || !settings.smtp_pass_enc) {
+		return { ok: false, error: "Configuração SMTP incompleta (servidor, usuário, remetente e senha são obrigatórios)." };
+	}
+	let pass;
+	try {
+		pass = await decryptSecret(settings.smtp_pass_enc, env.CRM_SESSION_SECRET);
+	} catch {
+		return { ok: false, error: "Não foi possível descriptografar a senha SMTP salva. Salve a senha novamente." };
+	}
+	return {
+		ok: true,
+		config: {
+			host: settings.smtp_host,
+			port: settings.smtp_port || "587",
+			secure: settings.smtp_secure || "starttls",
+			user: settings.smtp_user,
+			pass,
+			from: settings.smtp_from,
+		},
+	};
+}
+
+function buildLeadEmailContent(lead) {
+	const { name, phone, email, objective, pageUrl, source } = lead;
+	const phoneDigits = normalizeBrPhone(phone);
+	const waLink = phoneDigits ? `https://api.whatsapp.com/send?phone=${phoneDigits}` : "";
+	const receivedAt = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+	const fields = [
+		["Nome", name || "—", escapeHtml(name || "—")],
+		[
+			"Telefone",
+			phone || "—",
+			phone ? `${escapeHtml(phone)}${waLink ? ` &nbsp;·&nbsp; <a href="${waLink}">abrir WhatsApp</a>` : ""}` : "—",
+		],
+		["E-mail", email || "—", email ? escapeHtml(email) : "—"],
+		["Objetivo", objective || "—", escapeHtml(objective || "—")],
+		["Origem", source || "Formulário do site", escapeHtml(source || "Formulário do site")],
+		["Página", pageUrl || "—", pageUrl ? `<a href="${escapeHtml(pageUrl)}">${escapeHtml(pageUrl)}</a>` : "—"],
+		["Recebido em", `${receivedAt} (Brasília)`, `${escapeHtml(receivedAt)} (horário de Brasília)`],
+	];
+
+	const html = `
+		<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2b4a;max-width:520px">
+			<h2 style="margin:0 0 4px">Novo lead pelo site</h2>
+			<p style="margin:0 0 16px;color:#5a6b8a">Um contato acabou de se cadastrar.</p>
+			<table style="border-collapse:collapse;width:100%">
+				${fields
+					.map(
+						([label, , valueHtml]) =>
+							`<tr><td style="padding:8px 12px;border:1px solid #e2e6ef;background:#f6f8fc;font-weight:bold;white-space:nowrap">${label}</td><td style="padding:8px 12px;border:1px solid #e2e6ef">${valueHtml}</td></tr>`
+					)
+					.join("")}
+			</table>
+		</div>`;
+
+	const text = `Novo lead pelo site\n\n${fields.map(([label, value]) => `${label}: ${value}`).join("\n")}`;
+
+	return { subject: `Novo lead pelo site: ${name || "sem nome"}`, html, text };
+}
+
+async function sendLeadEmail(env, settings, lead) {
+	const to = splitAddresses(settings.lead_email_to);
+	if (to.length === 0) return { ok: false, error: "sem destinatário configurado" };
+
+	const resolved = await resolveSmtpConfig(env, settings);
+	if (!resolved.ok) return resolved;
+
+	try {
+		await withTimeout(sendMailViaSmtp(resolved.config, { to, ...buildLeadEmailContent(lead) }), 20000, "envio SMTP");
+		return { ok: true };
+	} catch (err) {
+		console.error("SMTP send failed", err);
+		return { ok: false, error: String((err && err.message) || err) };
+	}
+}
+
+function notifyLeadByEmail(env, ctx, lead) {
+	const task = (async () => {
+		try {
+			const settings = await getSettings(env);
+			if (settings.lead_email_enabled !== "1") return;
+			await sendLeadEmail(env, settings, lead);
+		} catch (err) {
+			console.error("lead email notification failed", err);
+		}
+	})();
+	if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(task);
+	else return task;
+}
+
+async function handleLead(request, env, ctx) {
 	let body;
 	try {
 		body = await request.json();
@@ -102,6 +424,8 @@ async function handleLead(request, env) {
 			console.error("D1 insert failed", err);
 		}
 	}
+
+	notifyLeadByEmail(env, ctx, { name, phone, objective, pageUrl, source: "Formulário do site" });
 
 	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, objective, fbp, fbc, pageUrl, request, testEventCode });
 	return json({ ok: true, meta: metaResult });
@@ -129,7 +453,7 @@ async function handleContact(request, env) {
 	return json({ ok: true, meta: metaResult });
 }
 
-async function handleLeadsterWebhook(request, env, url) {
+async function handleLeadsterWebhook(request, env, ctx, url) {
 	const token = url.searchParams.get("token");
 	if (!env.LEADSTER_WEBHOOK_TOKEN || token !== env.LEADSTER_WEBHOOK_TOKEN) {
 		return json({ ok: false, error: "unauthorized" }, 401);
@@ -171,6 +495,8 @@ async function handleLeadsterWebhook(request, env, url) {
 			console.error("D1 insert failed (leadster)", err);
 		}
 	}
+
+	notifyLeadByEmail(env, ctx, { name: leadName, phone, email, objective: "leadster", pageUrl, source: "Leadster" });
 
 	const metaResult = await sendMetaConversion(env, {
 		eventName: "Lead",
@@ -427,10 +753,89 @@ async function handleReorderStages(request, env) {
 	return json({ ok: true });
 }
 
+// ---------- settings routes ----------
+
+async function handleGetSettings(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	const all = await getSettings(env);
+	const settings = { ...all };
+	for (const key of HIDDEN_SETTINGS) delete settings[key];
+	return json({
+		ok: true,
+		settings,
+		smtpPasswordSet: Boolean(all.smtp_pass_enc),
+		serverSecretMissing: !env.CRM_SESSION_SECRET,
+	});
+}
+
+async function handleUpdateSettings(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	let body;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ ok: false, error: "invalid_json" }, 400);
+	}
+
+	const updates = [];
+	for (const key of EDITABLE_SETTINGS) {
+		if (body[key] === undefined) continue;
+		let value = body[key];
+		if (key === "lead_email_enabled") value = value === true || value === "1" || value === 1 ? "1" : "0";
+		else if (key === "smtp_secure") value = value === "ssl" || value === "tls" ? "ssl" : "starttls";
+		else value = String(value).trim();
+		updates.push([key, value]);
+	}
+
+	// A senha só é gravada quando um valor novo e não-vazio é enviado; caso contrário
+	// mantém a que já está salva.
+	if (typeof body.smtp_pass === "string" && body.smtp_pass !== "") {
+		if (!env.CRM_SESSION_SECRET) return json({ ok: false, error: "server_secret_missing" }, 500);
+		updates.push(["smtp_pass_enc", await encryptSecret(body.smtp_pass, env.CRM_SESSION_SECRET)]);
+	}
+
+	if (updates.length === 0) return json({ ok: false, error: "no_fields" }, 400);
+
+	const statements = updates.map(([key, value]) =>
+		env.DB.prepare(
+			"INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+		).bind(key, value)
+	);
+	await env.DB.batch(statements);
+	return json({ ok: true });
+}
+
+async function handleTestEmail(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	const settings = await getSettings(env);
+	const to = splitAddresses(settings.lead_email_to);
+	if (to.length === 0) return json({ ok: false, error: "Informe ao menos um e-mail de destino antes de testar." }, 400);
+
+	const resolved = await resolveSmtpConfig(env, settings);
+	if (!resolved.ok) return json({ ok: false, error: resolved.error }, 400);
+
+	const now = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+	try {
+		await withTimeout(
+			sendMailViaSmtp(resolved.config, {
+				to,
+				subject: "Teste de configuração — CRM Diana Dutra",
+				text: `E-mail de teste enviado pelo painel do CRM em ${now}. Se você recebeu, o envio por SMTP está funcionando.`,
+				html: `<p>E-mail de teste enviado pelo painel do CRM em <strong>${escapeHtml(now)}</strong>.</p><p>Se você recebeu, o envio por SMTP está funcionando. ✅</p>`,
+			}),
+			20000,
+			"envio SMTP"
+		);
+		return json({ ok: true });
+	} catch (err) {
+		return json({ ok: false, error: String((err && err.message) || err) }, 502);
+	}
+}
+
 // ---------- router ----------
 
 export default {
-	async fetch(request, env) {
+	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
 		const { pathname } = url;
 		const method = request.method;
@@ -440,7 +845,7 @@ export default {
 		}
 
 		if (pathname === "/api/lead" && method === "POST") {
-			return handleLead(request, env);
+			return handleLead(request, env, ctx);
 		}
 
 		if (pathname === "/api/contact" && method === "POST") {
@@ -448,7 +853,7 @@ export default {
 		}
 
 		if (pathname === "/api/leadster-webhook" && method === "POST") {
-			return handleLeadsterWebhook(request, env, url);
+			return handleLeadsterWebhook(request, env, ctx, url);
 		}
 
 		if (pathname === "/api/crm/login" && method === "POST") {
@@ -471,6 +876,16 @@ export default {
 		}
 		if (leadMatch && method === "DELETE") {
 			return requireAuth((req, e, ctx, session) => handleDeleteLead(req, e, ctx, session, Number(leadMatch[1])))(request, env);
+		}
+
+		if (pathname === "/api/crm/settings" && method === "GET") {
+			return requireAuth(handleGetSettings)(request, env);
+		}
+		if (pathname === "/api/crm/settings" && method === "PATCH") {
+			return requireAuth(handleUpdateSettings)(request, env);
+		}
+		if (pathname === "/api/crm/settings/test" && method === "POST") {
+			return requireAuth(handleTestEmail)(request, env);
 		}
 
 		if (pathname === "/api/crm/stages" && method === "GET") {

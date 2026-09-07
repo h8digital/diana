@@ -7,13 +7,14 @@ const toc = [
 	{ href: '#acesso', label: '1. Acessando o CRM' },
 	{ href: '#quadro', label: '2. O quadro (Kanban)' },
 	{ href: '#leads', label: '3. De onde vêm os leads' },
-	{ href: '#cartao', label: '4. Abrindo um lead' },
-	{ href: '#mover', label: '5. Movendo entre etapas' },
-	{ href: '#totais', label: '6. Totais por etapa' },
-	{ href: '#etapas', label: '7. Criar/editar etapas' },
-	{ href: '#sair', label: '8. Saindo' },
-	{ href: '#dicas', label: '9. Boas práticas' },
-	{ href: '#problemas', label: '10. Problemas comuns' },
+	{ href: '#email', label: '4. Aviso por e-mail' },
+	{ href: '#cartao', label: '5. Abrindo um lead' },
+	{ href: '#mover', label: '6. Movendo entre etapas' },
+	{ href: '#totais', label: '7. Totais por etapa' },
+	{ href: '#etapas', label: '8. Criar/editar etapas' },
+	{ href: '#sair', label: '9. Saindo' },
+	{ href: '#dicas', label: '10. Boas práticas' },
+	{ href: '#problemas', label: '11. Problemas comuns' },
 ];
 ---
 
@@ -166,9 +167,48 @@ const toc = [
 				</div>
 			</section>
 
-			<section id="cartao" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+			<section id="email" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
 					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">04</span>
+					<h2 class="text-[22px] font-bold text-navy">Aviso por e-mail a cada novo lead</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">
+					Além de o lead aparecer no quadro, o sistema dispara um e-mail com os dados
+					da pessoa (nome, WhatsApp, objetivo e página de origem) assim que o formulário é enviado.
+					Isso é útil para não depender de abrir o CRM para saber que chegou alguém.
+					O envio é feito pela sua conta de e-mail (SMTP), configurada uma única vez aqui.
+				</p>
+				<ol class="flex flex-col gap-2.5">
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">1</span>
+						<p>No topo da tela, clique em <strong class="font-semibold">⚙ Configurações</strong>.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">2</span>
+						<p>Preencha os dados do <strong class="font-semibold">servidor SMTP</strong> do seu provedor de e-mail: servidor, porta, segurança (STARTTLS na porta 587 ou SSL/TLS na 465), usuário, senha e o remetente (o e-mail que aparece no campo "De:").</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">3</span>
+						<p>Informe o(s) <strong class="font-semibold">e-mail(s) de destino</strong> — quem recebe o aviso. Para mais de um, separe por vírgula.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">4</span>
+						<p>Clique em <strong class="font-semibold">Enviar e-mail de teste</strong>. Ele salva e tenta um envio real — se der erro, a mensagem explica o que ajustar.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">5</span>
+						<p>Deu certo o teste? Marque <strong class="font-semibold">Enviar e-mail a cada novo lead</strong> e clique em <strong class="font-semibold">Salvar</strong>. Vale a partir do próximo lead.</p>
+					</li>
+				</ol>
+				<div class="mt-4 flex gap-3 rounded-xl border border-gold-deep/25 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">💡</span>
+					<p class="text-navy-soft">A senha do e-mail fica guardada de forma criptografada e nunca reaparece na tela — ao editar, deixe o campo de senha em branco para manter a que já está salva. Se o aviso não chegar, confira o spam e refaça o teste.</p>
+				</div>
+			</section>
+
+			<section id="cartao" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">05</span>
 					<h2 class="text-[22px] font-bold text-navy">Abrindo um lead</h2>
 				</div>
 				<p class="mb-6 max-w-[58ch] text-navy-soft">Clique em qualquer cartão para abrir os detalhes da pessoa e registrar o andamento da conversa.</p>
@@ -218,7 +258,7 @@ const toc = [
 
 			<section id="mover" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
-					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">05</span>
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">06</span>
 					<h2 class="text-[22px] font-bold text-navy">Movendo um lead entre etapas</h2>
 				</div>
 				<p class="mb-6 max-w-[58ch] text-navy-soft">
@@ -233,7 +273,7 @@ const toc = [
 
 			<section id="totais" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
-					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">06</span>
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">07</span>
 					<h2 class="text-[22px] font-bold text-navy">Totais por etapa</h2>
 				</div>
 				<p class="max-w-[58ch] text-navy-soft">
@@ -245,7 +285,7 @@ const toc = [
 
 			<section id="etapas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
-					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">07</span>
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">08</span>
 					<h2 class="text-[22px] font-bold text-navy">Criando e editando etapas</h2>
 				</div>
 				<p class="mb-6 max-w-[58ch] text-navy-soft">As colunas do quadro são totalmente ajustáveis ao seu processo — não precisa ficar preso ao padrão.</p>
@@ -259,7 +299,7 @@ const toc = [
 
 			<section id="sair" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
-					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">08</span>
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">09</span>
 					<h2 class="text-[22px] font-bold text-navy">Saindo do CRM</h2>
 				</div>
 				<p class="max-w-[58ch] text-navy-soft">
@@ -270,7 +310,7 @@ const toc = [
 
 			<section id="dicas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
-					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">09</span>
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">10</span>
 					<h2 class="text-[22px] font-bold text-navy">Boas práticas</h2>
 				</div>
 				<div class="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -295,7 +335,7 @@ const toc = [
 
 			<section id="problemas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
-					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">10</span>
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">11</span>
 					<h2 class="text-[22px] font-bold text-navy">Problemas comuns</h2>
 				</div>
 				<table class="w-full border-collapse text-sm">

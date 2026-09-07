@@ -296,6 +296,100 @@ async function deleteLead(): Promise<void> {
 	}
 }
 
+// ---------- settings ----------
+
+function setSettingsStatus(message: string, kind: 'ok' | 'error' | 'info'): void {
+	const status = $('crm-settings-status');
+	status.textContent = message;
+	status.classList.remove('hidden', 'text-red-600', 'text-emerald-600', 'text-navy-soft');
+	status.classList.add(kind === 'ok' ? 'text-emerald-600' : kind === 'error' ? 'text-red-600' : 'text-navy-soft');
+}
+
+async function openSettings(): Promise<void> {
+	const warning = $('crm-settings-warning');
+	$('crm-settings-status').classList.add('hidden');
+	warning.classList.add('hidden');
+
+	const { status: code, data } = await api('/api/crm/settings');
+	if (code === 200) {
+		const s = data.settings || {};
+		$<HTMLInputElement>('crm-settings-enabled').checked = s.lead_email_enabled === '1';
+		$<HTMLInputElement>('crm-settings-to').value = s.lead_email_to || '';
+		$<HTMLInputElement>('crm-smtp-host').value = s.smtp_host || '';
+		$<HTMLInputElement>('crm-smtp-port').value = s.smtp_port || '587';
+		$<HTMLSelectElement>('crm-smtp-secure').value = s.smtp_secure === 'ssl' ? 'ssl' : 'starttls';
+		$<HTMLInputElement>('crm-smtp-user').value = s.smtp_user || '';
+		$<HTMLInputElement>('crm-smtp-from').value = s.smtp_from || '';
+		$<HTMLInputElement>('crm-smtp-pass').value = '';
+		$('crm-smtp-pass-hint').classList.toggle('hidden', !data.smtpPasswordSet);
+
+		if (data.serverSecretMissing) {
+			warning.textContent = 'O servidor está sem CRM_SESSION_SECRET — a senha SMTP não pode ser guardada com segurança. Fale com o desenvolvedor.';
+			warning.classList.remove('hidden');
+		}
+	}
+
+	$('crm-settings-modal').classList.remove('hidden');
+	$('crm-settings-modal').classList.add('flex');
+}
+
+function closeSettings(): void {
+	$('crm-settings-modal').classList.add('hidden');
+	$('crm-settings-modal').classList.remove('flex');
+}
+
+function collectSettingsPayload(): Record<string, unknown> {
+	const payload: Record<string, unknown> = {
+		lead_email_enabled: $<HTMLInputElement>('crm-settings-enabled').checked,
+		lead_email_to: $<HTMLInputElement>('crm-settings-to').value.trim(),
+		smtp_host: $<HTMLInputElement>('crm-smtp-host').value.trim(),
+		smtp_port: $<HTMLInputElement>('crm-smtp-port').value.trim() || '587',
+		smtp_secure: $<HTMLSelectElement>('crm-smtp-secure').value,
+		smtp_user: $<HTMLInputElement>('crm-smtp-user').value.trim(),
+		smtp_from: $<HTMLInputElement>('crm-smtp-from').value.trim(),
+	};
+	const pass = $<HTMLInputElement>('crm-smtp-pass').value;
+	if (pass) payload.smtp_pass = pass;
+	return payload;
+}
+
+async function saveSettings(): Promise<boolean> {
+	const { status: code } = await api('/api/crm/settings', {
+		method: 'PATCH',
+		body: JSON.stringify(collectSettingsPayload()),
+	});
+
+	if (code === 200) {
+		$<HTMLInputElement>('crm-smtp-pass').value = '';
+		$('crm-smtp-pass-hint').classList.remove('hidden');
+		setSettingsStatus('Configurações salvas.', 'ok');
+		return true;
+	}
+	setSettingsStatus('Não foi possível salvar. Tente novamente.', 'error');
+	return false;
+}
+
+async function testSettings(): Promise<void> {
+	const button = $<HTMLButtonElement>('crm-settings-test');
+	button.disabled = true;
+	setSettingsStatus('Salvando e enviando e-mail de teste…', 'info');
+
+	const saved = await saveSettings();
+	if (!saved) {
+		button.disabled = false;
+		return;
+	}
+
+	setSettingsStatus('Enviando e-mail de teste…', 'info');
+	const { status: code, data } = await api('/api/crm/settings/test', { method: 'POST' });
+	if (code === 200) {
+		setSettingsStatus('E-mail de teste enviado. Confira a caixa de entrada (e o spam).', 'ok');
+	} else {
+		setSettingsStatus(`Falha no teste: ${data?.error || 'erro desconhecido'}`, 'error');
+	}
+	button.disabled = false;
+}
+
 // ---------- boot ----------
 
 async function bootBoard(): Promise<void> {
@@ -311,6 +405,10 @@ async function init(): Promise<void> {
 	$('crm-modal-close').addEventListener('click', closeLeadModal);
 	$('crm-modal-save').addEventListener('click', saveLead);
 	$('crm-modal-delete').addEventListener('click', deleteLead);
+	$('crm-settings-open').addEventListener('click', openSettings);
+	$('crm-settings-close').addEventListener('click', closeSettings);
+	$('crm-settings-save').addEventListener('click', () => void saveSettings());
+	$('crm-settings-test').addEventListener('click', () => void testSettings());
 
 	const valueInput = $<HTMLInputElement>('crm-modal-value');
 	valueInput.addEventListener('input', () => {
