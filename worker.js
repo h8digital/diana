@@ -226,10 +226,26 @@ async function sendMailViaSmtp(config, mail) {
 	const port = Number(config.port) || 587;
 	const useTls = config.secure === "ssl" || config.secure === "tls" || port === 465;
 
+	const transcript = [];
+	let stage = "conexão";
+	const smtpError = (message) => {
+		const err = new Error(message);
+		err.stage = stage;
+		err.transcript = transcript.slice();
+		return err;
+	};
+
 	let socket = connect(
 		{ hostname: config.host, port },
 		{ secureTransport: useTls ? "on" : "starttls", allowHalfOpen: false }
 	);
+	transcript.push(`→ conectando em ${config.host}:${port} (${useTls ? "TLS direto" : "STARTTLS"})`);
+
+	try {
+		if (socket.opened) await socket.opened;
+	} catch (err) {
+		throw smtpError(`não foi possível conectar em ${config.host}:${port} — ${String((err && err.message) || err)}`);
+	}
 
 	const encoder = new TextEncoder();
 	const decoder = new TextDecoder();
@@ -246,35 +262,46 @@ async function sendMailViaSmtp(config, mail) {
 				if (/^\d{3} /.test(lines[i])) {
 					const replyText = buffer.slice(0, consumed);
 					buffer = buffer.slice(consumed);
-					return { code: parseInt(replyText, 10), text: replyText.trim() };
+					const trimmed = replyText.trim();
+					transcript.push(`S: ${trimmed}`);
+					return { code: parseInt(replyText, 10), text: trimmed };
 				}
 			}
 			const { value, done } = await reader.read();
-			if (done) throw new Error("conexão SMTP encerrada inesperadamente");
+			if (done) throw smtpError(`conexão encerrada pelo servidor durante "${stage}"`);
 			buffer += decoder.decode(value, { stream: true });
 		}
 	}
 
-	async function command(line, okCodes, label) {
+	async function command(line, okCodes, label, { secret = false } = {}) {
+		stage = label || line.split(" ")[0];
+		transcript.push(`C: ${secret ? "<omitido>" : line}`);
 		await writer.write(encoder.encode(`${line}\r\n`));
 		const reply = await readReply();
 		if (!okCodes.includes(reply.code)) {
-			throw new Error(`SMTP recusou ${label || line.split(" ")[0]}: ${reply.text}`);
+			throw smtpError(`servidor recusou ${stage} — resposta ${reply.text}`);
 		}
 		return reply;
 	}
 
 	try {
+		stage = "saudação";
 		const greeting = await readReply();
-		if (greeting.code !== 220) throw new Error(`saudação SMTP inesperada: ${greeting.text}`);
+		if (greeting.code !== 220) throw smtpError(`saudação inesperada do servidor — ${greeting.text}`);
 
 		await command("EHLO diana-crm", [250], "EHLO");
 
 		if (!useTls) {
 			await command("STARTTLS", [220], "STARTTLS");
+			stage = "handshake TLS (STARTTLS)";
 			writer.releaseLock();
 			reader.releaseLock();
 			socket = socket.startTls();
+			try {
+				if (socket.opened) await socket.opened;
+			} catch (err) {
+				throw smtpError(`falha no handshake TLS com ${config.host} — ${String((err && err.message) || err)} (certificado do servidor pode não bater com o host)`);
+			}
 			writer = socket.writable.getWriter();
 			reader = socket.readable.getReader();
 			buffer = "";
@@ -282,8 +309,8 @@ async function sendMailViaSmtp(config, mail) {
 		}
 
 		await command("AUTH LOGIN", [334], "AUTH LOGIN");
-		await command(utf8ToBase64(config.user), [334], "usuário SMTP");
-		await command(utf8ToBase64(config.pass), [235], "autenticação SMTP");
+		await command(utf8ToBase64(config.user), [334], "usuário SMTP", { secret: true });
+		await command(utf8ToBase64(config.pass), [235], "autenticação (senha)", { secret: true });
 
 		await command(`MAIL FROM:<${extractEmail(config.from)}>`, [250], "MAIL FROM");
 		for (const rcpt of mail.to) {
@@ -291,10 +318,11 @@ async function sendMailViaSmtp(config, mail) {
 		}
 		await command("DATA", [354], "DATA");
 
+		stage = "envio do corpo";
 		const message = buildMimeMessage({ from: config.from, to: mail.to, subject: mail.subject, html: mail.html, text: mail.text });
 		await writer.write(encoder.encode(`${message.replace(/\r\n\./g, "\r\n..")}\r\n.\r\n`));
 		const sent = await readReply();
-		if (sent.code !== 250) throw new Error(`servidor rejeitou a mensagem: ${sent.text}`);
+		if (sent.code !== 250) throw smtpError(`servidor rejeitou a mensagem — ${sent.text}`);
 
 		await command("QUIT", [221], "QUIT").catch(() => {});
 	} finally {
@@ -828,7 +856,15 @@ async function handleTestEmail(request, env) {
 		);
 		return json({ ok: true });
 	} catch (err) {
-		return json({ ok: false, error: String((err && err.message) || err) }, 502);
+		return json(
+			{
+				ok: false,
+				error: String((err && err.message) || err),
+				stage: err && err.stage,
+				transcript: (err && err.transcript) || undefined,
+			},
+			502
+		);
 	}
 }
 

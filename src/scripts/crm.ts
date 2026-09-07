@@ -305,10 +305,22 @@ function setSettingsStatus(message: string, kind: 'ok' | 'error' | 'info'): void
 	status.classList.add(kind === 'ok' ? 'text-emerald-600' : kind === 'error' ? 'text-red-600' : 'text-navy-soft');
 }
 
+function showSettingsDiag(lines: string[] | null): void {
+	const diag = $('crm-settings-diag');
+	if (!lines || lines.length === 0) {
+		diag.classList.add('hidden');
+		diag.textContent = '';
+		return;
+	}
+	diag.textContent = lines.join('\n');
+	diag.classList.remove('hidden');
+}
+
 async function openSettings(): Promise<void> {
 	const warning = $('crm-settings-warning');
 	$('crm-settings-status').classList.add('hidden');
 	warning.classList.add('hidden');
+	showSettingsDiag(null);
 
 	const { status: code, data } = await api('/api/crm/settings');
 	if (code === 200) {
@@ -384,8 +396,11 @@ async function testSettings(): Promise<void> {
 	const { status: code, data } = await api('/api/crm/settings/test', { method: 'POST' });
 	if (code === 200) {
 		setSettingsStatus('E-mail de teste enviado. Confira a caixa de entrada (e o spam).', 'ok');
+		showSettingsDiag(null);
 	} else {
-		setSettingsStatus(`Falha no teste: ${data?.error || 'erro desconhecido'}`, 'error');
+		const stage = data?.stage ? ` (etapa: ${data.stage})` : '';
+		setSettingsStatus(`Falha no teste${stage}: ${data?.error || 'erro desconhecido'}`, 'error');
+		showSettingsDiag(Array.isArray(data?.transcript) ? data.transcript : null);
 	}
 	button.disabled = false;
 }
