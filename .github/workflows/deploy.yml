@@ -28,6 +28,13 @@ jobs:
           PUBLIC_FB_PIXEL_ID: ${{ secrets.PIXEL_FACEBOOK }}
         run: npm run build
 
+      - name: Apply D1 migrations
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
+          accountId: 30e1abd4edbb7e0f77cd94a5295470e4
+          command: d1 migrations apply diana-crm --remote
+
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v4
         env:
