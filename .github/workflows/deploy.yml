@@ -47,3 +47,11 @@ jobs:
             CRM_PASSWORD
             CRM_SESSION_SECRET
             LEADSTER_WEBHOOK_TOKEN
+
+      # Runs after the deploy so a migration hiccup never blocks shipping the Worker.
+      - name: Apply D1 migrations
+        continue-on-error: true
+        run: npx wrangler d1 migrations apply diana-crm --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
+          CLOUDFLARE_ACCOUNT_ID: 30e1abd4edbb7e0f77cd94a5295470e4
