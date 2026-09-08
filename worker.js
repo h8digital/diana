@@ -35,7 +35,11 @@ function normalizeBrPhone(raw) {
 }
 
 async function sendMetaConversion(env, { eventName, eventId, name, phone, objective, fbp, fbc, pageUrl, request, testEventCode }) {
-	if (!env.TOKEN_PIXEL_META || !env.PIXEL_FACEBOOK) return { ok: false, error: "not_configured" };
+	const settings = await getSettings(env);
+	const tracking = resolveTracking(env, settings);
+	const pixelId = tracking.metaPixel;
+	const accessToken = await resolveMetaCapiToken(env, settings);
+	if (!tracking.enabled || !pixelId || !accessToken) return { ok: false, error: "not_configured" };
 
 	const phoneDigits = normalizeBrPhone(phone);
 	const [firstName, ...rest] = (name || "").trim().split(/\s+/).filter(Boolean);
@@ -68,7 +72,7 @@ async function sendMetaConversion(env, { eventName, eventId, name, phone, object
 
 	try {
 		const metaResponse = await fetch(
-			`https://graph.facebook.com/v21.0/${env.PIXEL_FACEBOOK}/events?access_token=${env.TOKEN_PIXEL_META}`,
+			`https://graph.facebook.com/v21.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(accessToken)}`,
 			{ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
 		);
 		return { ok: metaResponse.ok, meta: await metaResponse.json().catch(() => ({})) };
@@ -193,17 +197,214 @@ async function handleUpdateTheme(request, env) {
 
 	if (updates.length === 0) return json({ ok: false, error: "no_fields" }, 400);
 
-	const statements = updates.map(([key, value]) =>
+	const r = await upsertSettings(env, updates);
+	return r.ok ? json({ ok: true }) : json({ ok: false, error: r.error }, 500);
+}
+
+// Grava pares [chave, valor] na tabela `settings` (upsert em lote).
+async function upsertSettings(env, pairs) {
+	const statements = pairs.map(([key, value]) =>
 		env.DB.prepare(
 			"INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
 		).bind(key, value)
 	);
 	try {
 		await env.DB.batch(statements);
+		return { ok: true };
 	} catch (err) {
-		return json({ ok: false, error: `Falha ao gravar no banco — ${String((err && err.message) || err)}` }, 500);
+		return { ok: false, error: `Falha ao gravar no banco — ${String((err && err.message) || err)}` };
 	}
+}
+
+// ---------- rastreamento (Meta Pixel/CAPI, Google Analytics/Ads) ----------
+
+// Campos de texto simples editáveis no CRM (o token da CAPI é tratado à parte,
+// criptografado em meta_capi_token_enc).
+const TRACKING_KEYS = ["tracking_enabled", "ga4_id", "google_ads_id", "google_ads_label", "meta_pixel_id"];
+
+const TRACKING_VALIDATORS = {
+	ga4_id: /^G-[A-Z0-9]{4,20}$/i,
+	google_ads_id: /^AW-\d{6,15}$/,
+	google_ads_label: /^[A-Za-z0-9_-]{3,80}$/,
+	meta_pixel_id: /^\d{6,20}$/,
+};
+
+// Escapa para uma string JS: só passam caracteres seguros de ID (validados na
+// gravação); o resto vira \xNN, neutralizando aspas e </script>.
+function jsStrSafe(value) {
+	return String(value ?? "").replace(/[^A-Za-z0-9._/-]/g, (c) => "\\x" + c.charCodeAt(0).toString(16).padStart(2, "0"));
+}
+
+// Config de rastreamento efetiva: valor salvo no CRM tem prioridade; senão a var
+// do Worker (definida no deploy) mantém o comportamento atual.
+function resolveTracking(env, settings) {
+	let adsId = (settings.google_ads_id || env.GOOGLE_ADS_ID || "").trim();
+	let adsLabel = (settings.google_ads_label || env.GOOGLE_ADS_LABEL || "").trim();
+	// aceita "AW-123456/AbCdEf" colado inteiro no campo de ID
+	if (!adsLabel && adsId.includes("/")) {
+		const parts = adsId.split("/");
+		adsId = parts[0];
+		adsLabel = parts[1] || "";
+	}
+	return {
+		enabled: (settings.tracking_enabled ?? "1") !== "0",
+		ga4: (settings.ga4_id || env.GA4_ID || "").trim(),
+		adsId,
+		adsLabel,
+		metaPixel: (settings.meta_pixel_id || env.PIXEL_FACEBOOK || "").trim(),
+	};
+}
+
+// HTML injetado no <head> das páginas públicas (substitui o marcador
+// <meta name="x-diana-track">). Mantém o mesmo formato do BaseLayout antigo:
+// carrega o gtag.js, inicializa GA4/Ads e o Meta Pixel, e publica
+// window.__TRACKING_IDS__ para os scripts do site (tracking.ts / effects.ts).
+function buildTrackingHead(t) {
+	if (!t.enabled) return "";
+	const out = [];
+	const loaderId = t.ga4 || t.adsId;
+	if (loaderId) {
+		const gadsTarget = t.adsId && t.adsLabel ? `${t.adsId}/${t.adsLabel}` : t.adsId;
+		out.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(loaderId)}"></script>`);
+		out.push(
+			"<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;" +
+				"gtag('js',new Date());" +
+				(t.ga4 ? `gtag('config','${jsStrSafe(t.ga4)}');` : "") +
+				(t.adsId ? `gtag('config','${jsStrSafe(t.adsId)}');` : "") +
+				`window.__TRACKING_IDS__={ga4:'${jsStrSafe(t.ga4)}',gads:'${jsStrSafe(gadsTarget)}',fbPixel:'${jsStrSafe(t.metaPixel)}'};</script>`
+		);
+	}
+	if (t.metaPixel) {
+		out.push(
+			"<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?" +
+				"n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;" +
+				"n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];" +
+				"s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');" +
+				`fbq('init','${jsStrSafe(t.metaPixel)}');fbq('track','PageView');</script>` +
+				`<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${encodeURIComponent(t.metaPixel)}&ev=PageView&noscript=1"/></noscript>`
+		);
+	}
+	return out.join("");
+}
+
+// Cache curto por isolate: a config muda raramente e não vale um SELECT por página.
+let _trackingCache = null;
+
+async function getTrackingCached(env) {
+	if (_trackingCache && Date.now() - _trackingCache.at < 60000) return _trackingCache.value;
+	const value = resolveTracking(env, await getSettings(env));
+	_trackingCache = { at: Date.now(), value };
+	return value;
+}
+
+async function resolveMetaCapiToken(env, settings) {
+	if (settings.meta_capi_token_enc && env.CRM_SESSION_SECRET) {
+		try {
+			return await decryptSecret(settings.meta_capi_token_enc, env.CRM_SESSION_SECRET);
+		} catch {
+			/* cai para a var do Worker */
+		}
+	}
+	return env.TOKEN_PIXEL_META || "";
+}
+
+async function handleGetTracking(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	const s = await getSettings(env);
+	const resolved = resolveTracking(env, s);
+	return json({
+		ok: true,
+		tracking: {
+			tracking_enabled: (s.tracking_enabled ?? "1") !== "0" ? "1" : "0",
+			ga4_id: s.ga4_id || "",
+			google_ads_id: s.google_ads_id || "",
+			google_ads_label: s.google_ads_label || "",
+			meta_pixel_id: s.meta_pixel_id || "",
+		},
+		effective: resolved,
+		metaCapiTokenSet: Boolean(s.meta_capi_token_enc) || Boolean(env.TOKEN_PIXEL_META),
+		metaCapiTokenFromEnv: !s.meta_capi_token_enc && Boolean(env.TOKEN_PIXEL_META),
+		serverSecretMissing: !env.CRM_SESSION_SECRET,
+	});
+}
+
+async function handleUpdateTracking(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	let body;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ ok: false, error: "invalid_json" }, 400);
+	}
+
+	const updates = [];
+	for (const key of TRACKING_KEYS) {
+		if (body[key] === undefined) continue;
+		if (key === "tracking_enabled") {
+			updates.push([key, body[key] === true || body[key] === "1" || body[key] === 1 ? "1" : "0"]);
+			continue;
+		}
+		const raw = String(body[key] ?? "").trim();
+		if (raw === "") {
+			updates.push([key, ""]);
+			continue;
+		}
+		const rule = TRACKING_VALIDATORS[key];
+		if (rule && !rule.test(raw)) {
+			return json({ ok: false, error: `Valor inválido em ${key}: "${raw}".` }, 400);
+		}
+		updates.push([key, raw]);
+	}
+
+	if (typeof body.meta_capi_token === "string" && body.meta_capi_token.trim() !== "") {
+		if (!env.CRM_SESSION_SECRET) {
+			return json({ ok: false, error: "O servidor está sem CRM_SESSION_SECRET — o token da API de Conversões não pode ser guardado." }, 500);
+		}
+		try {
+			updates.push(["meta_capi_token_enc", await encryptSecret(body.meta_capi_token.trim(), env.CRM_SESSION_SECRET)]);
+		} catch (err) {
+			return json({ ok: false, error: `Falha ao criptografar o token — ${String((err && err.message) || err)}` }, 500);
+		}
+	}
+
+	if (updates.length === 0) return json({ ok: false, error: "no_fields" }, 400);
+
+	const r = await upsertSettings(env, updates);
+	if (!r.ok) return json({ ok: false, error: r.error }, 500);
+	_trackingCache = null;
 	return json({ ok: true });
+}
+
+// Injeta os scripts de rastreamento nas respostas HTML públicas, substituindo o
+// marcador que o BaseLayout coloca quando enableTracking está ligado.
+async function injectTracking(res, env) {
+	const ct = res.headers.get("content-type") || "";
+	if (!ct.includes("text/html")) return res;
+
+	let head;
+	try {
+		head = buildTrackingHead(await getTrackingCached(env));
+	} catch (err) {
+		console.error("tracking resolve failed", err);
+		return res;
+	}
+
+	// A resposta passa a depender da config de rastreamento (não só do arquivo),
+	// então tira os validadores para o navegador não reaproveitar um HTML com IDs
+	// antigos via 304.
+	const headers = new Headers(res.headers);
+	headers.delete("ETag");
+	headers.delete("Last-Modified");
+	const rewritten = new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+
+	return new HTMLRewriter()
+		.on('meta[name="x-diana-track"]', {
+			element(el) {
+				if (head) el.replace(head, { html: true });
+				else el.remove();
+			},
+		})
+		.transform(rewritten);
 }
 
 // ---------- secret encryption (AES-GCM, chave derivada de CRM_SESSION_SECRET) ----------
@@ -901,6 +1102,13 @@ async function route(request, env, ctx) {
 		return requireAuth(handleUpdateTheme)(request, env);
 	}
 
+	if (pathname === "/api/crm/tracking" && method === "GET") {
+		return requireAuth(handleGetTracking)(request, env);
+	}
+	if (pathname === "/api/crm/tracking" && method === "PATCH") {
+		return requireAuth(handleUpdateTracking)(request, env);
+	}
+
 	if (pathname === "/api/crm/stages" && method === "GET") {
 		return requireAuth(handleListStages)(request, env);
 	}
@@ -918,5 +1126,15 @@ async function route(request, env, ctx) {
 		return requireAuth((req, e, ctx, session) => handleDeleteStage(req, e, ctx, session, Number(stageMatch[1])))(request, env);
 	}
 
-	return env.ASSETS.fetch(request);
+	// Em navegações (Accept: text/html) tiramos os headers condicionais para o
+	// asset server devolver o HTML completo e o Worker reinjetar o rastreamento
+	// atual — um 304 traria IDs antigos do cache do navegador. Sub-recursos
+	// (JS/CSS/imagens) seguem com revalidação normal.
+	let assetReq = request;
+	if ((request.headers.get("Accept") || "").includes("text/html")) {
+		assetReq = new Request(request);
+		assetReq.headers.delete("If-None-Match");
+		assetReq.headers.delete("If-Modified-Since");
+	}
+	return injectTracking(await env.ASSETS.fetch(assetReq), env);
 }

@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import logoMark from '../../assets/images/logo-mark.png';
+---
+
+<BaseLayout title="Rastreamento | CRM Diana Dutra" showWhatsApp={false} enableTracking={false} applyTheme={false}>
+	<div class="min-h-screen bg-mist">
+		<header class="flex items-center justify-between border-b border-navy/10 bg-white px-6 py-3">
+			<div class="flex items-center gap-3">
+				<Image src={logoMark} alt="Diana Dutra" class="h-8 w-auto" width={140} height={144} />
+				<span class="text-sm font-bold text-navy">CRM</span>
+			</div>
+			<div class="flex items-center gap-4">
+				<a href="/crm" class="text-sm font-semibold text-navy-soft transition-colors hover:text-navy">← Quadro de leads</a>
+				<a href="/crm/config" class="text-sm font-semibold text-navy-soft transition-colors hover:text-navy">🎨 Aparência</a>
+				<a href="/crm/manual" class="text-sm font-semibold text-navy-soft transition-colors hover:text-navy">📘 Manual</a>
+			</div>
+		</header>
+
+		<div id="trk-auth" class="hidden px-6 py-20 text-center">
+			<p class="text-navy-soft">Você precisa entrar no CRM para ajustar o rastreamento.</p>
+			<a href="/crm" class="mt-4 inline-block rounded-full bg-navy px-5 py-2 text-sm font-semibold text-white hover:bg-navy-light">Ir para o login</a>
+		</div>
+
+		<div id="trk-main" class="hidden">
+			<div class="mx-auto max-w-2xl px-6 py-8">
+				<h1 class="text-xl font-bold text-navy">Rastreamento e conversões</h1>
+				<p class="mt-1 max-w-[62ch] text-sm text-navy-soft">
+					IDs do Google Analytics, Google Ads e Meta (Facebook/Instagram). Ao salvar,
+					o site público passa a usar os novos valores em até 1 minuto — sem republicar.
+				</p>
+
+				<label class="mt-6 flex items-center gap-3">
+					<input id="trk-enabled" type="checkbox" class="h-4 w-4 rounded border-navy/30 accent-gold-deep" />
+					<span class="text-sm font-semibold text-navy">Rastreamento ativado no site</span>
+				</label>
+				<p class="mt-1 pl-7 text-[11px] text-navy-soft/80">Desmarque para remover todas as tags do site (útil em manutenção).</p>
+
+				<!-- Google -->
+				<section class="mt-6 rounded-xl border border-navy/10 bg-white p-4">
+					<h2 class="text-xs font-semibold uppercase tracking-wide text-navy-soft">Google</h2>
+
+					<label for="trk-ga4" class="mt-3 block text-xs font-semibold text-navy">Google Analytics 4 — ID de medição</label>
+					<input id="trk-ga4" type="text" spellcheck="false" autocomplete="off" placeholder="G-XXXXXXXXXX"
+						class="mt-1 w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-2.5 font-mono text-sm text-navy outline-none focus:border-gold-deep focus:bg-white" />
+					<p class="mt-1 text-[11px] text-navy-soft/70">Google Analytics → Administrador → Fluxos de dados.</p>
+
+					<label for="trk-ads-id" class="mt-3 block text-xs font-semibold text-navy">Google Ads — ID de conversão</label>
+					<input id="trk-ads-id" type="text" spellcheck="false" autocomplete="off" placeholder="AW-123456789"
+						class="mt-1 w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-2.5 font-mono text-sm text-navy outline-none focus:border-gold-deep focus:bg-white" />
+
+					<label for="trk-ads-label" class="mt-3 block text-xs font-semibold text-navy">Google Ads — rótulo da conversão de lead</label>
+					<input id="trk-ads-label" type="text" spellcheck="false" autocomplete="off" placeholder="AbCdEfGhIj-KlMnOpQ"
+						class="mt-1 w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-2.5 font-mono text-sm text-navy outline-none focus:border-gold-deep focus:bg-white" />
+					<p class="mt-1 text-[11px] text-navy-soft/70">Google Ads → Metas → Conversões → a ação de lead → "Configuração da tag". É o trecho depois da barra em <code class="font-mono">AW-000/<b>rótulo</b></code>.</p>
+				</section>
+
+				<!-- Meta -->
+				<section class="mt-5 rounded-xl border border-navy/10 bg-white p-4">
+					<h2 class="text-xs font-semibold uppercase tracking-wide text-navy-soft">Meta (Facebook / Instagram)</h2>
+
+					<label for="trk-pixel" class="mt-3 block text-xs font-semibold text-navy">Pixel ID</label>
+					<input id="trk-pixel" type="text" spellcheck="false" autocomplete="off" placeholder="123456789012345"
+						class="mt-1 w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-2.5 font-mono text-sm text-navy outline-none focus:border-gold-deep focus:bg-white" />
+					<p class="mt-1 text-[11px] text-navy-soft/70">Gerenciador de Eventos da Meta → Configurações do conjunto de dados.</p>
+
+					<label for="trk-capi" class="mt-3 block text-xs font-semibold text-navy">Token da API de Conversões</label>
+					<input id="trk-capi" type="password" autocomplete="new-password" placeholder="••••••••"
+						class="mt-1 w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-2.5 text-navy outline-none focus:border-gold-deep focus:bg-white" />
+					<p id="trk-capi-hint" class="mt-1 hidden text-[11px] text-navy-soft/70"></p>
+					<p class="mt-1 text-[11px] text-navy-soft/70">Envio de conversões pelo servidor (mais preciso). Gerenciador de Eventos → Configurações → API de Conversões → Gerar token de acesso.</p>
+				</section>
+
+				<p id="trk-warning" class="mt-3 hidden rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700"></p>
+
+				<div class="mt-5 flex flex-wrap items-center gap-3">
+					<button id="trk-save" class="rounded-full bg-navy px-5 py-2 text-xs font-semibold text-white hover:bg-navy-light disabled:opacity-50">Salvar</button>
+					<span id="trk-status" class="hidden text-xs font-medium"></span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="../../scripts/crm-tracking.ts"></script>
+</BaseLayout>

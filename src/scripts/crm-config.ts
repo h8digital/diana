@@ -1,5 +1,6 @@
 // Editor de cores do site (/crm/config). Lê e grava em /api/crm/theme; a prévia
 // é um iframe do site real onde injetamos as variáveis CSS ao vivo.
+export {};
 
 interface ThemeColor {
 	key: string;

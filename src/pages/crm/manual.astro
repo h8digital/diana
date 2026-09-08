@@ -15,7 +15,8 @@ const toc = [
 	{ href: '#sair', label: '9. Saindo' },
 	{ href: '#dicas', label: '10. Boas práticas' },
 	{ href: '#aparencia', label: '11. Aparência do site' },
-	{ href: '#problemas', label: '12. Problemas comuns' },
+	{ href: '#rastreamento', label: '12. Rastreamento' },
+	{ href: '#problemas', label: '13. Problemas comuns' },
 ];
 ---
 
@@ -363,9 +364,31 @@ const toc = [
 				</div>
 			</section>
 
-			<section id="problemas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+			<section id="rastreamento" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
 					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">12</span>
+					<h2 class="text-[22px] font-bold text-navy">Rastreamento (Google e Meta)</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">
+					Os códigos de acompanhamento de anúncios ficam em <strong class="text-navy">📊 Rastreamento</strong>,
+					no topo do CRM. Normalmente quem preenche é a agência ou o responsável de mídia.
+				</p>
+				<table class="w-full border-collapse text-sm">
+					<tr><th class="w-1/3 border-b border-navy/10 py-2.5 pr-3 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">Campo</th><th class="border-b border-navy/10 py-2.5 text-left font-heading text-[11.5px] font-semibold uppercase tracking-wide text-navy-soft">O que é</th></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Google Analytics 4</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">ID <code class="font-mono">G-XXXXXXXX</code> — mede visitas e comportamento no site.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Google Ads</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">ID <code class="font-mono">AW-XXXXXX</code> + o rótulo da conversão de lead — registra no Google Ads quando alguém preenche o formulário.</td></tr>
+					<tr><td class="border-b border-navy/10 py-2.5 pr-3 font-medium align-top">Meta Pixel</td><td class="border-b border-navy/10 py-2.5 align-top text-navy-soft">Número do pixel — acompanhamento de Facebook e Instagram Ads.</td></tr>
+					<tr><td class="py-2.5 pr-3 font-medium align-top">Token da API de Conversões</td><td class="py-2.5 align-top text-navy-soft">Envio dos leads para a Meta pelo servidor, além do pixel — mais preciso. Fica guardado criptografado; para trocar, cole um novo.</td></tr>
+				</table>
+				<div class="mt-4 flex gap-3 rounded-xl border border-gold-deep/25 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">💡</span>
+					<p class="text-navy-soft">Salvou? O site aplica em até 1 minuto, sem republicar. Para pausar todo o rastreamento (ex.: manutenção), desmarque <strong class="text-navy">Rastreamento ativado no site</strong>.</p>
+				</div>
+			</section>
+
+			<section id="problemas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">13</span>
 					<h2 class="text-[22px] font-bold text-navy">Problemas comuns</h2>
 				</div>
 				<table class="w-full border-collapse text-sm">

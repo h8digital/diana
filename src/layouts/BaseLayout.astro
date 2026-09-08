@@ -18,22 +18,9 @@ const {
 	applyTheme = true,
 } = Astro.props;
 
-const ga4Id = enableTracking ? (import.meta.env.PUBLIC_GA4_ID ?? '') : '';
-const gadsId = enableTracking ? (import.meta.env.PUBLIC_GADS_ID ?? '') : '';
-const fbPixelId = enableTracking ? (import.meta.env.PUBLIC_FB_PIXEL_ID ?? '') : '';
-
-// The literal id must appear directly in `fbq('init', '...')` (not a JS variable
-// reference) - Meta's automated pixel-verification crawler pattern-matches the
-// base code text and won't resolve a runtime variable.
-const fbPixelScript = fbPixelId
-	? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '${fbPixelId}');
-fbq('track', 'PageView');`
-	: '';
+// Os IDs de rastreamento (GA4, Google Ads, Meta Pixel) são configurados no CRM
+// (/crm/tracking) e injetados pelo Worker no lugar deste marcador — assim a
+// Diana ajusta sem rebuild. Ver worker.js `injectTracking`.
 ---
 
 <!DOCTYPE html>
@@ -71,29 +58,9 @@ fbq('track', 'PageView');`
 			})}
 		/>
 
-		{ga4Id && (
-			<Fragment>
-				<script async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>
-				<script define:vars={{ ga4Id, gadsId, fbPixelId }}>
-					window.dataLayer = window.dataLayer || [];
-					function gtag() { dataLayer.push(arguments); }
-					window.gtag = gtag;
-					gtag('js', new Date());
-					if (ga4Id) gtag('config', ga4Id);
-					if (gadsId) gtag('config', gadsId);
-					window.__TRACKING_IDS__ = { ga4: ga4Id, gads: gadsId, fbPixel: fbPixelId };
-				</script>
-			</Fragment>
-		)}
-
-		{fbPixelId && (
-			<Fragment>
-				<script set:html={fbPixelScript} />
-				<noscript>
-					<img height="1" width="1" style="display:none" src={`https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1`} />
-				</noscript>
-			</Fragment>
-		)}
+		{/* O Worker substitui este marcador pelos scripts de GA4/Google Ads/Meta
+		    Pixel conforme a config do CRM. Sem marcador (CRM), nada é injetado. */}
+		{enableTracking && <meta name="x-diana-track" content="1" />}
 
 		{enableTracking && (
 			<script set:html={`(function(a,b,c,d){try{var e=b.head||b.getElementsByTagName("head")[0];var f=b.createElement("script");f.setAttribute("src",c);f.setAttribute("charset","UTF-8");f.defer=true;a.neuroleadId=d;e.appendChild(f)}catch(g){}})(window,document,"https://cdn.leadster.com.br/neurolead/neurolead.min.js","3o7evP5I2AoCrJDRWjjEPXWEk")`} />

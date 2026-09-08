@@ -22,10 +22,6 @@ jobs:
         run: npm ci
 
       - name: Build site
-        env:
-          PUBLIC_GA4_ID: ${{ secrets.ID_GA4 }}
-          PUBLIC_GADS_ID: ${{ secrets.ID_GADS }}
-          PUBLIC_FB_PIXEL_ID: ${{ secrets.PIXEL_FACEBOOK }}
         run: npm run build
 
       - name: Deploy with Wrangler
@@ -38,6 +34,8 @@ jobs:
           CRM_SESSION_SECRET: ${{ secrets.CRM_SESSION_SECRET }}
           LEADSTER_WEBHOOK_TOKEN: ${{ secrets.LEADSTER_WEBHOOK_TOKEN }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GA4_ID: ${{ secrets.ID_GA4 }}
+          GOOGLE_ADS_ID: ${{ secrets.ID_GADS }}
         with:
           apiToken: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
           accountId: 30e1abd4edbb7e0f77cd94a5295470e4
@@ -49,6 +47,8 @@ jobs:
             CRM_SESSION_SECRET
             LEADSTER_WEBHOOK_TOKEN
             RESEND_API_KEY
+            GA4_ID
+            GOOGLE_ADS_ID
 
       # KNOWN BROKEN: this step fails in CI (production has no d1_migrations
       # tracking table, so wrangler replays 0002's `ALTER TABLE ... ADD COLUMN`
