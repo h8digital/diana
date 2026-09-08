@@ -7,6 +7,7 @@ interface Props {
 	description?: string;
 	showWhatsApp?: boolean;
 	enableTracking?: boolean;
+	applyTheme?: boolean;
 }
 
 const {
@@ -14,6 +15,7 @@ const {
 	description = siteConfig.description,
 	showWhatsApp = true,
 	enableTracking = true,
+	applyTheme = true,
 } = Astro.props;
 
 const ga4Id = enableTracking ? (import.meta.env.PUBLIC_GA4_ID ?? '') : '';
@@ -96,6 +98,11 @@ fbq('track', 'PageView');`
 		{enableTracking && (
 			<script set:html={`(function(a,b,c,d){try{var e=b.head||b.getElementsByTagName("head")[0];var f=b.createElement("script");f.setAttribute("src",c);f.setAttribute("charset","UTF-8");f.defer=true;a.neuroleadId=d;e.appendChild(f)}catch(g){}})(window,document,"https://cdn.leadster.com.br/neurolead/neurolead.min.js","3o7evP5I2AoCrJDRWjjEPXWEk")`} />
 		)}
+
+		{/* Cores da marca configuráveis no CRM (/crm/config). Servido pelo Worker
+		    a partir do D1; vazio = paleta padrão de global.css. Fica por último no
+		    <head> para sobrepor as variáveis do @theme do Tailwind. */}
+		{applyTheme && <link rel="stylesheet" href="/api/site/theme.css" />}
 	</head>
 	<body class="bg-paper text-navy">
 		<slot />

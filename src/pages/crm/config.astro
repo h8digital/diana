@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import logoMark from '../../assets/images/logo-mark.png';
+
+const colors = [
+	{ key: 'theme_navy', label: 'Azul principal', hint: 'Títulos, textos, cabeçalho e rodapé' },
+	{ key: 'theme_navy_light', label: 'Azul claro', hint: 'Hover dos botões escuros' },
+	{ key: 'theme_navy_soft', label: 'Azul acinzentado', hint: 'Textos de apoio e legendas' },
+	{ key: 'theme_gold', label: 'Dourado', hint: 'Realces, seleção de texto, detalhes' },
+	{ key: 'theme_gold_deep', label: 'Dourado escuro', hint: 'Botões principais, links e ícones' },
+	{ key: 'theme_paper', label: 'Fundo da página', hint: 'Cor de fundo geral do site' },
+	{ key: 'theme_mist', label: 'Fundo alternativo', hint: 'Fundo de seções e caixas' },
+];
+---
+
+<BaseLayout title="Aparência do site | CRM Diana Dutra" showWhatsApp={false} enableTracking={false} applyTheme={false}>
+	<div class="min-h-screen bg-mist">
+		<header class="flex items-center justify-between border-b border-navy/10 bg-white px-6 py-3">
+			<div class="flex items-center gap-3">
+				<Image src={logoMark} alt="Diana Dutra" class="h-8 w-auto" width={140} height={144} />
+				<span class="text-sm font-bold text-navy">CRM</span>
+			</div>
+			<div class="flex items-center gap-4">
+				<a href="/crm" class="text-sm font-semibold text-navy-soft transition-colors hover:text-navy">← Quadro de leads</a>
+				<a href="/crm/manual" class="text-sm font-semibold text-navy-soft transition-colors hover:text-navy">📘 Manual</a>
+			</div>
+		</header>
+
+		<!-- Sem sessão -->
+		<div id="cfg-auth" class="hidden px-6 py-20 text-center">
+			<p class="text-navy-soft">Você precisa entrar no CRM para ajustar a aparência.</p>
+			<a href="/crm" class="mt-4 inline-block rounded-full bg-navy px-5 py-2 text-sm font-semibold text-white hover:bg-navy-light">Ir para o login</a>
+		</div>
+
+		<!-- Editor -->
+		<div id="cfg-main" class="hidden">
+			<div class="mx-auto max-w-6xl px-6 py-8">
+				<h1 class="text-xl font-bold text-navy">Aparência do site</h1>
+				<p class="mt-1 max-w-[62ch] text-sm text-navy-soft">
+					Ajuste as cores da marca. O quadro abaixo mostra uma prévia ao vivo do site.
+					Ao salvar, o site público atualiza em até 1 minuto.
+				</p>
+
+				<div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr]">
+					<!-- Coluna: cores -->
+					<div>
+						<div id="cfg-fields" class="flex flex-col gap-3">
+							{colors.map((c) => (
+								<div class="rounded-xl border border-navy/10 bg-white p-3" data-row={c.key}>
+									<div class="flex items-center gap-3">
+										<input
+											type="color"
+											data-picker={c.key}
+											class="h-10 w-12 shrink-0 cursor-pointer rounded-lg border border-navy/15 bg-white p-0.5"
+										/>
+										<div class="min-w-0 flex-1">
+											<p class="text-sm font-semibold text-navy">{c.label}</p>
+											<p class="truncate text-[11px] text-navy-soft/80">{c.hint}</p>
+										</div>
+										<input
+											type="text"
+											data-hex={c.key}
+											spellcheck="false"
+											autocomplete="off"
+											class="w-24 rounded-lg border border-navy/15 bg-mist/60 px-2 py-1.5 text-center font-mono text-xs text-navy outline-none focus:border-gold-deep focus:bg-white"
+										/>
+									</div>
+									<button
+										type="button"
+										data-reset={c.key}
+										class="mt-2 hidden text-[11px] font-semibold text-navy-soft underline decoration-dotted underline-offset-2 hover:text-navy"
+									>
+										voltar ao padrão
+									</button>
+								</div>
+							))}
+						</div>
+
+						<div class="mt-4 flex flex-wrap items-center gap-3">
+							<button id="cfg-save" class="rounded-full bg-navy px-5 py-2 text-xs font-semibold text-white hover:bg-navy-light disabled:opacity-50">
+								Salvar
+							</button>
+							<button id="cfg-reset-all" class="rounded-full border border-navy/20 px-4 py-2 text-xs font-semibold text-navy transition-colors hover:bg-navy hover:text-white">
+								Restaurar tudo
+							</button>
+							<span id="cfg-status" class="hidden text-xs font-medium"></span>
+						</div>
+					</div>
+
+					<!-- Coluna: prévia -->
+					<div class="lg:sticky lg:top-6 lg:self-start">
+						<div class="flex items-center justify-between">
+							<p class="text-xs font-semibold uppercase tracking-wide text-navy-soft">Prévia ao vivo</p>
+							<a href="/" target="_blank" rel="noopener" class="text-xs font-semibold text-navy-soft hover:text-navy">abrir site ↗</a>
+						</div>
+						<div class="mt-2 overflow-hidden rounded-xl border border-navy/15 bg-white shadow-sm">
+							<iframe id="cfg-preview" src="/" title="Prévia do site" class="h-[70vh] w-full border-0"></iframe>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="../../scripts/crm-config.ts"></script>
+</BaseLayout>

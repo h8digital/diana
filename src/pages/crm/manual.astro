@@ -14,11 +14,12 @@ const toc = [
 	{ href: '#etapas', label: '8. Criar/editar etapas' },
 	{ href: '#sair', label: '9. Saindo' },
 	{ href: '#dicas', label: '10. Boas práticas' },
-	{ href: '#problemas', label: '11. Problemas comuns' },
+	{ href: '#aparencia', label: '11. Aparência do site' },
+	{ href: '#problemas', label: '12. Problemas comuns' },
 ];
 ---
 
-<BaseLayout title="Manual do CRM | Diana Dutra Investimentos" showWhatsApp={false} enableTracking={false}>
+<BaseLayout title="Manual do CRM | Diana Dutra Investimentos" showWhatsApp={false} enableTracking={false} applyTheme={false}>
 	<header class="sticky top-0 z-20 flex items-center gap-3.5 border-b border-navy/10 bg-paper/90 px-6 py-4 backdrop-blur-md">
 		<Image src={logoMark} alt="Diana Dutra Investimentos" class="h-8 w-auto" width={140} height={144} />
 		<div class="leading-tight">
@@ -333,9 +334,38 @@ const toc = [
 				</div>
 			</section>
 
-			<section id="problemas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+			<section id="aparencia" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
 				<div class="mb-1.5 flex items-baseline gap-3">
 					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">11</span>
+					<h2 class="text-[22px] font-bold text-navy">Aparência do site</h2>
+				</div>
+				<p class="mb-6 max-w-[58ch] text-navy-soft">
+					Dá para trocar as cores da marca no site público sem mexer no código.
+					No topo do CRM, clique em <strong class="text-navy">🎨 Aparência</strong>.
+				</p>
+				<ol class="flex flex-col gap-2.5">
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">1</span>
+						<p>Cada linha é uma cor da marca (azul principal, dourado, fundo…). Clique no quadradinho colorido para escolher, ou digite o código <code class="font-mono">#rrggbb</code>.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">2</span>
+						<p>O quadro à direita é uma <strong class="text-navy">prévia ao vivo</strong> do site real — muda conforme você escolhe as cores.</p>
+					</li>
+					<li class="grid grid-cols-[30px_1fr] items-start gap-3.5 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
+						<span class="grid h-[26px] w-[26px] place-items-center rounded-full bg-navy font-heading text-[13px] font-bold text-gold">3</span>
+						<p>Gostou? Clique em <strong class="text-navy">Salvar</strong>. O site público aplica as novas cores em até 1 minuto. Para desfazer uma cor, use <strong class="text-navy">voltar ao padrão</strong>; para desfazer tudo, <strong class="text-navy">Restaurar tudo</strong>.</p>
+					</li>
+				</ol>
+				<div class="mt-4 flex gap-3 rounded-xl border border-gold-deep/25 bg-mist p-4 text-[14.5px]">
+					<span class="text-[17px] leading-tight">💡</span>
+					<p class="text-navy-soft">Só as cores do <strong class="text-navy">site</strong> mudam — o CRM continua igual, então nunca dá para "se perder" numa combinação ruim. Se algo ficar estranho, é só Restaurar tudo.</p>
+				</div>
+			</section>
+
+			<section id="problemas" class="mt-10 scroll-mt-24 border-t border-navy/10 pt-10">
+				<div class="mb-1.5 flex items-baseline gap-3">
+					<span class="font-heading text-[13px] font-bold tracking-wide text-gold-deep">12</span>
 					<h2 class="text-[22px] font-bold text-navy">Problemas comuns</h2>
 				</div>
 				<table class="w-full border-collapse text-sm">

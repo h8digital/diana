@@ -117,6 +117,95 @@ function splitAddresses(raw) {
 		.filter(Boolean);
 }
 
+// ---------- cores do site (tema configurável no CRM) ----------
+
+// Cada cor da marca: chave em `settings` (theme_*), a CSS custom property que o
+// Tailwind usa (--color-*, ver src/styles/global.css) e o valor padrão. Um valor
+// não definido / inválido cai no padrão do build.
+const THEME_COLORS = [
+	{ key: "theme_navy", cssVar: "--color-navy", default: "#0e183c" },
+	{ key: "theme_navy_light", cssVar: "--color-navy-light", default: "#1c2a54" },
+	{ key: "theme_navy_soft", cssVar: "--color-navy-soft", default: "#4a5578" },
+	{ key: "theme_gold", cssVar: "--color-gold", default: "#ffdd5a" },
+	{ key: "theme_gold_deep", cssVar: "--color-gold-deep", default: "#e8b923" },
+	{ key: "theme_paper", cssVar: "--color-paper", default: "#f8f9fc" },
+	{ key: "theme_mist", cssVar: "--color-mist", default: "#eef1f8" },
+];
+
+function isHexColor(value) {
+	return typeof value === "string" && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value.trim());
+}
+
+function buildThemeCss(settings) {
+	const decls = THEME_COLORS.filter((c) => isHexColor(settings[c.key]))
+		.map((c) => `${c.cssVar}:${settings[c.key].trim().toLowerCase()}`)
+		.join(";");
+	// `:root:root` (especificidade 0,2,0) para vencer o `:root` do @theme do
+	// Tailwind independentemente da ordem dos <link> no <head>.
+	return decls ? `:root:root{${decls}}` : "";
+}
+
+async function handleThemeCss(env) {
+	const settings = await getSettings(env);
+	const css = buildThemeCss(settings) || "/* tema padrão */";
+	return new Response(css, {
+		headers: {
+			"Content-Type": "text/css; charset=utf-8",
+			"Cache-Control": "public, max-age=60",
+			...CORS_HEADERS,
+		},
+	});
+}
+
+async function handleGetTheme(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	const settings = await getSettings(env);
+	const theme = {};
+	const defaults = {};
+	for (const c of THEME_COLORS) {
+		theme[c.key] = isHexColor(settings[c.key]) ? settings[c.key].trim().toLowerCase() : "";
+		defaults[c.key] = c.default;
+	}
+	return json({ ok: true, theme, defaults });
+}
+
+async function handleUpdateTheme(request, env) {
+	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
+	let body;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ ok: false, error: "invalid_json" }, 400);
+	}
+
+	const updates = [];
+	for (const c of THEME_COLORS) {
+		if (body[c.key] === undefined) continue;
+		const raw = String(body[c.key] ?? "").trim();
+		if (raw === "") {
+			updates.push([c.key, ""]); // vazio = voltar ao padrão do build
+		} else if (isHexColor(raw)) {
+			updates.push([c.key, raw.toLowerCase()]);
+		} else {
+			return json({ ok: false, error: `Cor inválida em ${c.key}: "${raw}" (use #rrggbb).` }, 400);
+		}
+	}
+
+	if (updates.length === 0) return json({ ok: false, error: "no_fields" }, 400);
+
+	const statements = updates.map(([key, value]) =>
+		env.DB.prepare(
+			"INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+		).bind(key, value)
+	);
+	try {
+		await env.DB.batch(statements);
+	} catch (err) {
+		return json({ ok: false, error: `Falha ao gravar no banco — ${String((err && err.message) || err)}` }, 500);
+	}
+	return json({ ok: true });
+}
+
 // ---------- secret encryption (AES-GCM, chave derivada de CRM_SESSION_SECRET) ----------
 
 async function deriveAesKey(secret) {
@@ -765,6 +854,10 @@ async function route(request, env, ctx) {
 		return handleContact(request, env);
 	}
 
+	if (pathname === "/api/site/theme.css" && method === "GET") {
+		return handleThemeCss(env);
+	}
+
 	if (pathname === "/api/leadster-webhook" && method === "POST") {
 		return handleLeadsterWebhook(request, env, ctx, url);
 	}
@@ -799,6 +892,13 @@ async function route(request, env, ctx) {
 	}
 	if (pathname === "/api/crm/settings/test" && method === "POST") {
 		return requireAuth(handleTestEmail)(request, env);
+	}
+
+	if (pathname === "/api/crm/theme" && method === "GET") {
+		return requireAuth(handleGetTheme)(request, env);
+	}
+	if (pathname === "/api/crm/theme" && method === "PATCH") {
+		return requireAuth(handleUpdateTheme)(request, env);
 	}
 
 	if (pathname === "/api/crm/stages" && method === "GET") {
