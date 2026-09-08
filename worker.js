@@ -312,6 +312,10 @@ async function handleGetTracking(request, env) {
 	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
 	const s = await getSettings(env);
 	const resolved = resolveTracking(env, s);
+
+	// "panel" = salvo no CRM; "server" = só na var do Worker; "" = não configurado.
+	const src = (dbValue, effectiveValue) => (dbValue ? "panel" : effectiveValue ? "server" : "");
+
 	return json({
 		ok: true,
 		tracking: {
@@ -321,9 +325,19 @@ async function handleGetTracking(request, env) {
 			google_ads_label: s.google_ads_label || "",
 			meta_pixel_id: s.meta_pixel_id || "",
 		},
-		effective: resolved,
-		metaCapiTokenSet: Boolean(s.meta_capi_token_enc) || Boolean(env.TOKEN_PIXEL_META),
-		metaCapiTokenFromEnv: !s.meta_capi_token_enc && Boolean(env.TOKEN_PIXEL_META),
+		effective: {
+			ga4_id: resolved.ga4,
+			google_ads_id: resolved.adsId,
+			google_ads_label: resolved.adsLabel,
+			meta_pixel_id: resolved.metaPixel,
+		},
+		sources: {
+			ga4_id: src(s.ga4_id, resolved.ga4),
+			google_ads_id: src(s.google_ads_id, resolved.adsId),
+			google_ads_label: src(s.google_ads_label, resolved.adsLabel),
+			meta_pixel_id: src(s.meta_pixel_id, resolved.metaPixel),
+			meta_capi_token: s.meta_capi_token_enc ? "panel" : env.TOKEN_PIXEL_META ? "server" : "",
+		},
 		serverSecretMissing: !env.CRM_SESSION_SECRET,
 	});
 }
