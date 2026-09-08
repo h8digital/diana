@@ -48,9 +48,10 @@ jobs:
             CRM_SESSION_SECRET
             LEADSTER_WEBHOOK_TOKEN
 
-      # Runs after the deploy so a migration hiccup never blocks shipping the Worker.
+      # Runs after the deploy so a migration failure never blocks shipping the
+      # Worker — but it is NOT continue-on-error: a red step here is the signal
+      # that migrations did not apply (e.g. the API token is missing D1:Edit).
       - name: Apply D1 migrations
-        continue-on-error: true
         run: npx wrangler d1 migrations apply diana-crm --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
