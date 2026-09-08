@@ -316,10 +316,23 @@ async function openSettings(): Promise<void> {
 		$<HTMLInputElement>('crm-settings-enabled').checked = s.lead_email_enabled === '1';
 		$<HTMLInputElement>('crm-settings-to').value = s.lead_email_to || '';
 		$<HTMLInputElement>('crm-resend-from').value = s.resend_from || '';
-		$<HTMLInputElement>('crm-resend-key').value = '';
-		$('crm-resend-key-hint').classList.toggle('hidden', !data.resendKeySet);
 
-		if (data.serverSecretMissing) {
+		const keyInput = $<HTMLInputElement>('crm-resend-key');
+		const keyHint = $('crm-resend-key-hint');
+		keyInput.value = '';
+		if (data.resendKeyFromEnv) {
+			keyInput.disabled = true;
+			keyInput.placeholder = 'Configurada no servidor';
+			keyHint.textContent = 'A API key está no servidor (secret RESEND_API_KEY). Para trocar, atualize o secret no deploy.';
+			keyHint.classList.remove('hidden');
+		} else {
+			keyInput.disabled = false;
+			keyInput.placeholder = 're_...';
+			keyHint.textContent = 'Já existe uma API key salva. Deixe em branco para mantê-la.';
+			keyHint.classList.toggle('hidden', !data.resendKeySet);
+		}
+
+		if (data.serverSecretMissing && !data.resendKeyFromEnv) {
 			warning.textContent = 'O servidor está sem CRM_SESSION_SECRET — a API key da Resend não pode ser guardada com segurança. Fale com o desenvolvedor.';
 			warning.classList.remove('hidden');
 		}

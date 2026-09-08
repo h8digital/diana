@@ -37,6 +37,7 @@ jobs:
           CRM_PASSWORD: ${{ secrets.PASS_CRM }}
           CRM_SESSION_SECRET: ${{ secrets.CRM_SESSION_SECRET }}
           LEADSTER_WEBHOOK_TOKEN: ${{ secrets.LEADSTER_WEBHOOK_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         with:
           apiToken: ${{ secrets.TOKEN_WORKES_CLOUDFLARE }}
           accountId: 30e1abd4edbb7e0f77cd94a5295470e4
@@ -47,6 +48,7 @@ jobs:
             CRM_PASSWORD
             CRM_SESSION_SECRET
             LEADSTER_WEBHOOK_TOKEN
+            RESEND_API_KEY
 
       # Runs after the deploy so a migration failure never blocks shipping the
       # Worker — but it is NOT continue-on-error: a red step here is the signal

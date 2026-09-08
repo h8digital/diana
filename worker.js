@@ -187,24 +187,30 @@ async function sendMailViaResend(config, mail) {
 
 // ---------- lead e-mail notifications ----------
 
+// A API key vem primeiro da secret RESEND_API_KEY do Worker; se não houver,
+// cai para a key salva (criptografada) no painel. O remetente vem do painel
+// (resend_from) ou da var RESEND_FROM.
 async function resolveResendConfig(env, settings) {
-	if (!env.CRM_SESSION_SECRET) return { ok: false, error: "CRM_SESSION_SECRET ausente no servidor." };
-	if (!settings.resend_from || !settings.resend_api_key_enc) {
-		return { ok: false, error: "Configuração da Resend incompleta (remetente e API key são obrigatórios)." };
+	const from = settings.resend_from || env.RESEND_FROM;
+	if (!from) {
+		return { ok: false, error: "Remetente da Resend não configurado (campo Remetente no painel ou a var RESEND_FROM)." };
 	}
+
+	if (env.RESEND_API_KEY) {
+		return { ok: true, config: { apiKey: env.RESEND_API_KEY, from } };
+	}
+
+	if (!settings.resend_api_key_enc) {
+		return { ok: false, error: "API key da Resend não configurada (secret RESEND_API_KEY no Worker ou campo API key no painel)." };
+	}
+	if (!env.CRM_SESSION_SECRET) return { ok: false, error: "CRM_SESSION_SECRET ausente no servidor." };
 	let apiKey;
 	try {
 		apiKey = await decryptSecret(settings.resend_api_key_enc, env.CRM_SESSION_SECRET);
 	} catch {
 		return { ok: false, error: "Não foi possível descriptografar a API key da Resend salva. Salve a API key novamente." };
 	}
-	return {
-		ok: true,
-		config: {
-			apiKey,
-			from: settings.resend_from,
-		},
-	};
+	return { ok: true, config: { apiKey, from } };
 }
 
 function buildLeadEmailContent(lead) {
@@ -640,7 +646,8 @@ async function handleGetSettings(request, env) {
 	return json({
 		ok: true,
 		settings,
-		resendKeySet: Boolean(all.resend_api_key_enc),
+		resendKeySet: Boolean(all.resend_api_key_enc) || Boolean(env.RESEND_API_KEY),
+		resendKeyFromEnv: Boolean(env.RESEND_API_KEY),
 		serverSecretMissing: !env.CRM_SESSION_SECRET,
 	});
 }
