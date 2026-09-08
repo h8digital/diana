@@ -351,6 +351,23 @@ async function handleUpdateTracking(request, env) {
 		return json({ ok: false, error: "invalid_json" }, 400);
 	}
 
+	// Normaliza o ID do Google Ads: aceita "AW-123456789/AbCd", "123456789" ou
+	// "AW-123456789". Se vier com "/", a parte depois da barra vira o rótulo
+	// (quando o campo de rótulo não foi preenchido separadamente).
+	if (typeof body.google_ads_id === "string") {
+		let v = body.google_ads_id.trim();
+		if (v.includes("/")) {
+			const [idPart, labelPart] = v.split("/");
+			v = idPart.trim();
+			if (labelPart && !String(body.google_ads_label ?? "").trim()) {
+				body.google_ads_label = labelPart.trim();
+			}
+		}
+		if (/^\d{6,15}$/.test(v)) v = "AW-" + v;
+		body.google_ads_id = v;
+	}
+	if (typeof body.ga4_id === "string") body.ga4_id = body.ga4_id.trim().toUpperCase();
+
 	const updates = [];
 	for (const key of TRACKING_KEYS) {
 		if (body[key] === undefined) continue;
