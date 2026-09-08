@@ -305,38 +305,22 @@ function setSettingsStatus(message: string, kind: 'ok' | 'error' | 'info'): void
 	status.classList.add(kind === 'ok' ? 'text-emerald-600' : kind === 'error' ? 'text-red-600' : 'text-navy-soft');
 }
 
-function showSettingsDiag(lines: string[] | null): void {
-	const diag = $('crm-settings-diag');
-	if (!lines || lines.length === 0) {
-		diag.classList.add('hidden');
-		diag.textContent = '';
-		return;
-	}
-	diag.textContent = lines.join('\n');
-	diag.classList.remove('hidden');
-}
-
 async function openSettings(): Promise<void> {
 	const warning = $('crm-settings-warning');
 	$('crm-settings-status').classList.add('hidden');
 	warning.classList.add('hidden');
-	showSettingsDiag(null);
 
 	const { status: code, data } = await api('/api/crm/settings');
 	if (code === 200) {
 		const s = data.settings || {};
 		$<HTMLInputElement>('crm-settings-enabled').checked = s.lead_email_enabled === '1';
 		$<HTMLInputElement>('crm-settings-to').value = s.lead_email_to || '';
-		$<HTMLInputElement>('crm-smtp-host').value = s.smtp_host || '';
-		$<HTMLInputElement>('crm-smtp-port').value = s.smtp_port || '587';
-		$<HTMLSelectElement>('crm-smtp-secure').value = s.smtp_secure === 'ssl' ? 'ssl' : 'starttls';
-		$<HTMLInputElement>('crm-smtp-user').value = s.smtp_user || '';
-		$<HTMLInputElement>('crm-smtp-from').value = s.smtp_from || '';
-		$<HTMLInputElement>('crm-smtp-pass').value = '';
-		$('crm-smtp-pass-hint').classList.toggle('hidden', !data.smtpPasswordSet);
+		$<HTMLInputElement>('crm-resend-from').value = s.resend_from || '';
+		$<HTMLInputElement>('crm-resend-key').value = '';
+		$('crm-resend-key-hint').classList.toggle('hidden', !data.resendKeySet);
 
 		if (data.serverSecretMissing) {
-			warning.textContent = 'O servidor está sem CRM_SESSION_SECRET — a senha SMTP não pode ser guardada com segurança. Fale com o desenvolvedor.';
+			warning.textContent = 'O servidor está sem CRM_SESSION_SECRET — a API key da Resend não pode ser guardada com segurança. Fale com o desenvolvedor.';
 			warning.classList.remove('hidden');
 		}
 	}
@@ -354,14 +338,10 @@ function collectSettingsPayload(): Record<string, unknown> {
 	const payload: Record<string, unknown> = {
 		lead_email_enabled: $<HTMLInputElement>('crm-settings-enabled').checked,
 		lead_email_to: $<HTMLInputElement>('crm-settings-to').value.trim(),
-		smtp_host: $<HTMLInputElement>('crm-smtp-host').value.trim(),
-		smtp_port: $<HTMLInputElement>('crm-smtp-port').value.trim() || '587',
-		smtp_secure: $<HTMLSelectElement>('crm-smtp-secure').value,
-		smtp_user: $<HTMLInputElement>('crm-smtp-user').value.trim(),
-		smtp_from: $<HTMLInputElement>('crm-smtp-from').value.trim(),
+		resend_from: $<HTMLInputElement>('crm-resend-from').value.trim(),
 	};
-	const pass = $<HTMLInputElement>('crm-smtp-pass').value;
-	if (pass) payload.smtp_pass = pass;
+	const key = $<HTMLInputElement>('crm-resend-key').value.trim();
+	if (key) payload.resend_api_key = key;
 	return payload;
 }
 
@@ -372,8 +352,8 @@ async function saveSettings(): Promise<boolean> {
 	});
 
 	if (code === 200) {
-		$<HTMLInputElement>('crm-smtp-pass').value = '';
-		$('crm-smtp-pass-hint').classList.remove('hidden');
+		$<HTMLInputElement>('crm-resend-key').value = '';
+		$('crm-resend-key-hint').classList.remove('hidden');
 		setSettingsStatus('Configurações salvas.', 'ok');
 		return true;
 	}
@@ -396,11 +376,8 @@ async function testSettings(): Promise<void> {
 	const { status: code, data } = await api('/api/crm/settings/test', { method: 'POST' });
 	if (code === 200) {
 		setSettingsStatus('E-mail de teste enviado. Confira a caixa de entrada (e o spam).', 'ok');
-		showSettingsDiag(null);
 	} else {
-		const stage = data?.stage ? ` (etapa: ${data.stage})` : '';
-		setSettingsStatus(`Falha no teste${stage}: ${data?.error || 'erro desconhecido'}`, 'error');
-		showSettingsDiag(Array.isArray(data?.transcript) ? data.transcript : null);
+		setSettingsStatus(`Falha no teste: ${data?.error || 'erro desconhecido'}`, 'error');
 	}
 	button.disabled = false;
 }

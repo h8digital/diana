@@ -1,5 +1,3 @@
-import { connect } from "cloudflare:sockets";
-
 const CORS_HEADERS = {
 	"Access-Control-Allow-Origin": "*",
 	"Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
@@ -84,26 +82,14 @@ async function sendMetaConversion(env, { eventName, eventId, name, phone, object
 const DEFAULT_SETTINGS = {
 	lead_email_enabled: "0",
 	lead_email_to: "",
-	smtp_host: "",
-	smtp_port: "587",
-	smtp_secure: "starttls", // "starttls" (porta 587) ou "ssl" (porta 465)
-	smtp_user: "",
-	smtp_from: "",
+	resend_from: "",
 };
 
-// Editáveis pelo painel. A senha (smtp_pass) é tratada à parte: guardada
-// criptografada (smtp_pass_enc) e nunca devolvida ao navegador.
-const EDITABLE_SETTINGS = [
-	"lead_email_enabled",
-	"lead_email_to",
-	"smtp_host",
-	"smtp_port",
-	"smtp_secure",
-	"smtp_user",
-	"smtp_from",
-];
+// Editáveis pelo painel. A API key da Resend (resend_api_key) é tratada à parte:
+// guardada criptografada (resend_api_key_enc) e nunca devolvida ao navegador.
+const EDITABLE_SETTINGS = ["lead_email_enabled", "lead_email_to", "resend_from"];
 
-const HIDDEN_SETTINGS = ["smtp_pass_enc"];
+const HIDDEN_SETTINGS = ["resend_api_key_enc"];
 
 async function getSettings(env) {
 	const settings = { ...DEFAULT_SETTINGS };
@@ -136,7 +122,7 @@ function splitAddresses(raw) {
 async function deriveAesKey(secret) {
 	const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), "PBKDF2", false, ["deriveKey"]);
 	return crypto.subtle.deriveKey(
-		{ name: "PBKDF2", salt: new TextEncoder().encode("diana-crm/smtp/v1"), iterations: 100000, hash: "SHA-256" },
+		{ name: "PBKDF2", salt: new TextEncoder().encode("diana-crm/secret/v1"), iterations: 100000, hash: "SHA-256" },
 		material,
 		{ name: "AES-GCM", length: 256 },
 		false,
@@ -161,59 +147,7 @@ async function decryptSecret(payload, secret) {
 	return new TextDecoder().decode(pt);
 }
 
-// ---------- SMTP client (Cloudflare Workers TCP sockets) ----------
-
-function utf8ToBase64(str) {
-	const bytes = new TextEncoder().encode(str);
-	let bin = "";
-	for (const b of bytes) bin += String.fromCharCode(b);
-	return btoa(bin);
-}
-
-function extractEmail(addr) {
-	const m = String(addr || "").match(/<([^>]+)>/);
-	return (m ? m[1] : String(addr || "")).trim();
-}
-
-function mimeEncodeHeader(str) {
-	return /^[\x20-\x7E]*$/.test(str) ? str : `=?UTF-8?B?${utf8ToBase64(str)}?=`;
-}
-
-function encodeFromHeader(from) {
-	const m = String(from || "").match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
-	if (!m) return extractEmail(from);
-	const name = m[1].replace(/^"|"$/g, "").trim();
-	return name ? `${mimeEncodeHeader(name)} <${m[2].trim()}>` : `<${m[2].trim()}>`;
-}
-
-function buildMimeMessage({ from, to, subject, html, text }) {
-	const boundary = `_dc_${crypto.randomUUID().replace(/-/g, "")}`;
-	const wrap = (b64) => b64.replace(/(.{76})/g, "$1\r\n");
-	const headers = [
-		`From: ${encodeFromHeader(from)}`,
-		`To: ${to.join(", ")}`,
-		`Subject: ${mimeEncodeHeader(subject)}`,
-		`Date: ${new Date().toUTCString()}`,
-		`Message-ID: <${crypto.randomUUID()}@diana-crm>`,
-		"MIME-Version: 1.0",
-		`Content-Type: multipart/alternative; boundary="${boundary}"`,
-	];
-	const body = [
-		`--${boundary}`,
-		"Content-Type: text/plain; charset=UTF-8",
-		"Content-Transfer-Encoding: base64",
-		"",
-		wrap(utf8ToBase64(text)),
-		`--${boundary}`,
-		"Content-Type: text/html; charset=UTF-8",
-		"Content-Transfer-Encoding: base64",
-		"",
-		wrap(utf8ToBase64(html)),
-		`--${boundary}--`,
-		"",
-	];
-	return `${headers.join("\r\n")}\r\n\r\n${body.join("\r\n")}`;
-}
+// ---------- e-mail (Resend HTTP API) ----------
 
 function withTimeout(promise, ms, label) {
 	return Promise.race([
@@ -222,138 +156,53 @@ function withTimeout(promise, ms, label) {
 	]);
 }
 
-async function sendMailViaSmtp(config, mail) {
-	const port = Number(config.port) || 587;
-	const useTls = config.secure === "ssl" || config.secure === "tls" || port === 465;
-
-	const transcript = [];
-	let stage = "conexão";
-	const smtpError = (message) => {
-		const err = new Error(message);
-		err.stage = stage;
-		err.transcript = transcript.slice();
-		return err;
-	};
-
-	let socket = connect(
-		{ hostname: config.host, port },
-		{ secureTransport: useTls ? "on" : "starttls", allowHalfOpen: false }
-	);
-	transcript.push(`→ conectando em ${config.host}:${port} (${useTls ? "TLS direto" : "STARTTLS"})`);
-
+async function sendMailViaResend(config, mail) {
+	let res;
 	try {
-		if (socket.opened) await socket.opened;
+		res = await fetch("https://api.resend.com/emails", {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${config.apiKey}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				from: config.from,
+				to: mail.to,
+				subject: mail.subject,
+				html: mail.html,
+				text: mail.text,
+			}),
+		});
 	} catch (err) {
-		throw smtpError(`não foi possível conectar em ${config.host}:${port} — ${String((err && err.message) || err)}`);
+		throw new Error(`não foi possível contatar a API da Resend — ${String((err && err.message) || err)}`);
 	}
 
-	const encoder = new TextEncoder();
-	const decoder = new TextDecoder();
-	let writer = socket.writable.getWriter();
-	let reader = socket.readable.getReader();
-	let buffer = "";
-
-	async function readReply() {
-		for (;;) {
-			const lines = buffer.split("\r\n");
-			let consumed = 0;
-			for (let i = 0; i < lines.length - 1; i++) {
-				consumed += lines[i].length + 2;
-				if (/^\d{3} /.test(lines[i])) {
-					const replyText = buffer.slice(0, consumed);
-					buffer = buffer.slice(consumed);
-					const trimmed = replyText.trim();
-					transcript.push(`S: ${trimmed}`);
-					return { code: parseInt(replyText, 10), text: trimmed };
-				}
-			}
-			const { value, done } = await reader.read();
-			if (done) throw smtpError(`conexão encerrada pelo servidor durante "${stage}"`);
-			buffer += decoder.decode(value, { stream: true });
-		}
+	const data = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		const detail = data && (data.message || data.error || data.name);
+		throw new Error(`a Resend recusou o envio (HTTP ${res.status})${detail ? ` — ${detail}` : ""}`);
 	}
-
-	async function command(line, okCodes, label, { secret = false } = {}) {
-		stage = label || line.split(" ")[0];
-		transcript.push(`C: ${secret ? "<omitido>" : line}`);
-		await writer.write(encoder.encode(`${line}\r\n`));
-		const reply = await readReply();
-		if (!okCodes.includes(reply.code)) {
-			throw smtpError(`servidor recusou ${stage} — resposta ${reply.text}`);
-		}
-		return reply;
-	}
-
-	try {
-		stage = "saudação";
-		const greeting = await readReply();
-		if (greeting.code !== 220) throw smtpError(`saudação inesperada do servidor — ${greeting.text}`);
-
-		await command("EHLO diana-crm", [250], "EHLO");
-
-		if (!useTls) {
-			await command("STARTTLS", [220], "STARTTLS");
-			stage = "handshake TLS (STARTTLS)";
-			writer.releaseLock();
-			reader.releaseLock();
-			socket = socket.startTls();
-			try {
-				if (socket.opened) await socket.opened;
-			} catch (err) {
-				throw smtpError(`falha no handshake TLS com ${config.host} — ${String((err && err.message) || err)} (certificado do servidor pode não bater com o host)`);
-			}
-			writer = socket.writable.getWriter();
-			reader = socket.readable.getReader();
-			buffer = "";
-			await command("EHLO diana-crm", [250], "EHLO (TLS)");
-		}
-
-		await command("AUTH LOGIN", [334], "AUTH LOGIN");
-		await command(utf8ToBase64(config.user), [334], "usuário SMTP", { secret: true });
-		await command(utf8ToBase64(config.pass), [235], "autenticação (senha)", { secret: true });
-
-		await command(`MAIL FROM:<${extractEmail(config.from)}>`, [250], "MAIL FROM");
-		for (const rcpt of mail.to) {
-			await command(`RCPT TO:<${rcpt}>`, [250, 251], `RCPT TO ${rcpt}`);
-		}
-		await command("DATA", [354], "DATA");
-
-		stage = "envio do corpo";
-		const message = buildMimeMessage({ from: config.from, to: mail.to, subject: mail.subject, html: mail.html, text: mail.text });
-		await writer.write(encoder.encode(`${message.replace(/\r\n\./g, "\r\n..")}\r\n.\r\n`));
-		const sent = await readReply();
-		if (sent.code !== 250) throw smtpError(`servidor rejeitou a mensagem — ${sent.text}`);
-
-		await command("QUIT", [221], "QUIT").catch(() => {});
-	} finally {
-		try { writer.releaseLock(); } catch {}
-		try { reader.releaseLock(); } catch {}
-		try { await socket.close(); } catch {}
-	}
+	return data;
 }
 
 // ---------- lead e-mail notifications ----------
 
-async function resolveSmtpConfig(env, settings) {
+async function resolveResendConfig(env, settings) {
 	if (!env.CRM_SESSION_SECRET) return { ok: false, error: "CRM_SESSION_SECRET ausente no servidor." };
-	if (!settings.smtp_host || !settings.smtp_user || !settings.smtp_from || !settings.smtp_pass_enc) {
-		return { ok: false, error: "Configuração SMTP incompleta (servidor, usuário, remetente e senha são obrigatórios)." };
+	if (!settings.resend_from || !settings.resend_api_key_enc) {
+		return { ok: false, error: "Configuração da Resend incompleta (remetente e API key são obrigatórios)." };
 	}
-	let pass;
+	let apiKey;
 	try {
-		pass = await decryptSecret(settings.smtp_pass_enc, env.CRM_SESSION_SECRET);
+		apiKey = await decryptSecret(settings.resend_api_key_enc, env.CRM_SESSION_SECRET);
 	} catch {
-		return { ok: false, error: "Não foi possível descriptografar a senha SMTP salva. Salve a senha novamente." };
+		return { ok: false, error: "Não foi possível descriptografar a API key da Resend salva. Salve a API key novamente." };
 	}
 	return {
 		ok: true,
 		config: {
-			host: settings.smtp_host,
-			port: settings.smtp_port || "587",
-			secure: settings.smtp_secure || "starttls",
-			user: settings.smtp_user,
-			pass,
-			from: settings.smtp_from,
+			apiKey,
+			from: settings.resend_from,
 		},
 	};
 }
@@ -401,14 +250,14 @@ async function sendLeadEmail(env, settings, lead) {
 	const to = splitAddresses(settings.lead_email_to);
 	if (to.length === 0) return { ok: false, error: "sem destinatário configurado" };
 
-	const resolved = await resolveSmtpConfig(env, settings);
+	const resolved = await resolveResendConfig(env, settings);
 	if (!resolved.ok) return resolved;
 
 	try {
-		await withTimeout(sendMailViaSmtp(resolved.config, { to, ...buildLeadEmailContent(lead) }), 20000, "envio SMTP");
+		await withTimeout(sendMailViaResend(resolved.config, { to, ...buildLeadEmailContent(lead) }), 15000, "envio Resend");
 		return { ok: true };
 	} catch (err) {
-		console.error("SMTP send failed", err);
+		console.error("Resend send failed", err);
 		return { ok: false, error: String((err && err.message) || err) };
 	}
 }
@@ -791,7 +640,7 @@ async function handleGetSettings(request, env) {
 	return json({
 		ok: true,
 		settings,
-		smtpPasswordSet: Boolean(all.smtp_pass_enc),
+		resendKeySet: Boolean(all.resend_api_key_enc),
 		serverSecretMissing: !env.CRM_SESSION_SECRET,
 	});
 }
@@ -810,16 +659,15 @@ async function handleUpdateSettings(request, env) {
 		if (body[key] === undefined) continue;
 		let value = body[key];
 		if (key === "lead_email_enabled") value = value === true || value === "1" || value === 1 ? "1" : "0";
-		else if (key === "smtp_secure") value = value === "ssl" || value === "tls" ? "ssl" : "starttls";
 		else value = String(value).trim();
 		updates.push([key, value]);
 	}
 
-	// A senha só é gravada quando um valor novo e não-vazio é enviado; caso contrário
-	// mantém a que já está salva.
-	if (typeof body.smtp_pass === "string" && body.smtp_pass !== "") {
+	// A API key só é gravada quando um valor novo e não-vazio é enviado; caso
+	// contrário mantém a que já está salva.
+	if (typeof body.resend_api_key === "string" && body.resend_api_key.trim() !== "") {
 		if (!env.CRM_SESSION_SECRET) return json({ ok: false, error: "server_secret_missing" }, 500);
-		updates.push(["smtp_pass_enc", await encryptSecret(body.smtp_pass, env.CRM_SESSION_SECRET)]);
+		updates.push(["resend_api_key_enc", await encryptSecret(body.resend_api_key.trim(), env.CRM_SESSION_SECRET)]);
 	}
 
 	if (updates.length === 0) return json({ ok: false, error: "no_fields" }, 400);
@@ -839,20 +687,20 @@ async function handleTestEmail(request, env) {
 	const to = splitAddresses(settings.lead_email_to);
 	if (to.length === 0) return json({ ok: false, error: "Informe ao menos um e-mail de destino antes de testar." }, 400);
 
-	const resolved = await resolveSmtpConfig(env, settings);
+	const resolved = await resolveResendConfig(env, settings);
 	if (!resolved.ok) return json({ ok: false, error: resolved.error }, 400);
 
 	const now = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 	try {
 		await withTimeout(
-			sendMailViaSmtp(resolved.config, {
+			sendMailViaResend(resolved.config, {
 				to,
 				subject: "Teste de configuração — CRM Diana Dutra",
-				text: `E-mail de teste enviado pelo painel do CRM em ${now}. Se você recebeu, o envio por SMTP está funcionando.`,
-				html: `<p>E-mail de teste enviado pelo painel do CRM em <strong>${escapeHtml(now)}</strong>.</p><p>Se você recebeu, o envio por SMTP está funcionando. ✅</p>`,
+				text: `E-mail de teste enviado pelo painel do CRM em ${now}. Se você recebeu, o envio pela Resend está funcionando.`,
+				html: `<p>E-mail de teste enviado pelo painel do CRM em <strong>${escapeHtml(now)}</strong>.</p><p>Se você recebeu, o envio pela Resend está funcionando. ✅</p>`,
 			}),
-			20000,
-			"envio SMTP"
+			15000,
+			"envio Resend"
 		);
 		return json({ ok: true });
 	} catch (err) {
@@ -860,8 +708,6 @@ async function handleTestEmail(request, env) {
 			{
 				ok: false,
 				error: String((err && err.message) || err),
-				stage: err && err.stage,
-				transcript: (err && err.transcript) || undefined,
 			},
 			502
 		);
