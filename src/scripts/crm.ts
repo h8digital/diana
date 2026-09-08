@@ -346,7 +346,7 @@ function collectSettingsPayload(): Record<string, unknown> {
 }
 
 async function saveSettings(): Promise<boolean> {
-	const { status: code } = await api('/api/crm/settings', {
+	const { status: code, data } = await api('/api/crm/settings', {
 		method: 'PATCH',
 		body: JSON.stringify(collectSettingsPayload()),
 	});
@@ -357,7 +357,7 @@ async function saveSettings(): Promise<boolean> {
 		setSettingsStatus('Configurações salvas.', 'ok');
 		return true;
 	}
-	setSettingsStatus('Não foi possível salvar. Tente novamente.', 'error');
+	setSettingsStatus(`Não foi possível salvar: ${data?.error || 'erro desconhecido'}`, 'error');
 	return false;
 }
 

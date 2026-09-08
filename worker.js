@@ -666,8 +666,14 @@ async function handleUpdateSettings(request, env) {
 	// A API key só é gravada quando um valor novo e não-vazio é enviado; caso
 	// contrário mantém a que já está salva.
 	if (typeof body.resend_api_key === "string" && body.resend_api_key.trim() !== "") {
-		if (!env.CRM_SESSION_SECRET) return json({ ok: false, error: "server_secret_missing" }, 500);
-		updates.push(["resend_api_key_enc", await encryptSecret(body.resend_api_key.trim(), env.CRM_SESSION_SECRET)]);
+		if (!env.CRM_SESSION_SECRET) {
+			return json({ ok: false, error: "O servidor está sem CRM_SESSION_SECRET — a API key não pode ser guardada. Fale com o desenvolvedor." }, 500);
+		}
+		try {
+			updates.push(["resend_api_key_enc", await encryptSecret(body.resend_api_key.trim(), env.CRM_SESSION_SECRET)]);
+		} catch (err) {
+			return json({ ok: false, error: `Falha ao criptografar a API key — ${String((err && err.message) || err)}` }, 500);
+		}
 	}
 
 	if (updates.length === 0) return json({ ok: false, error: "no_fields" }, 400);
@@ -677,7 +683,11 @@ async function handleUpdateSettings(request, env) {
 			"INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
 		).bind(key, value)
 	);
-	await env.DB.batch(statements);
+	try {
+		await env.DB.batch(statements);
+	} catch (err) {
+		return json({ ok: false, error: `Falha ao gravar no banco — ${String((err && err.message) || err)}` }, 500);
+	}
 	return json({ ok: true });
 }
 
@@ -718,75 +728,88 @@ async function handleTestEmail(request, env) {
 
 export default {
 	async fetch(request, env, ctx) {
-		const url = new URL(request.url);
-		const { pathname } = url;
-		const method = request.method;
-
-		if (method === "OPTIONS") {
-			return new Response(null, { headers: CORS_HEADERS });
+		try {
+			return await route(request, env, ctx);
+		} catch (err) {
+			console.error("unhandled worker error", err);
+			const url = new URL(request.url);
+			if (url.pathname.startsWith("/api/")) {
+				return json({ ok: false, error: `Erro interno — ${String((err && err.message) || err)}` }, 500);
+			}
+			throw err;
 		}
-
-		if (pathname === "/api/lead" && method === "POST") {
-			return handleLead(request, env, ctx);
-		}
-
-		if (pathname === "/api/contact" && method === "POST") {
-			return handleContact(request, env);
-		}
-
-		if (pathname === "/api/leadster-webhook" && method === "POST") {
-			return handleLeadsterWebhook(request, env, ctx, url);
-		}
-
-		if (pathname === "/api/crm/login" && method === "POST") {
-			return handleLogin(request, env);
-		}
-		if (pathname === "/api/crm/logout" && method === "POST") {
-			return handleLogout();
-		}
-		if (pathname === "/api/crm/me" && method === "GET") {
-			const session = await getSession(request, env);
-			return session ? json({ ok: true, username: session.u }) : json({ ok: false }, 401);
-		}
-
-		if (pathname === "/api/crm/leads" && method === "GET") {
-			return requireAuth(handleListLeads)(request, env);
-		}
-		const leadMatch = pathname.match(/^\/api\/crm\/leads\/(\d+)$/);
-		if (leadMatch && method === "PATCH") {
-			return requireAuth((req, e, ctx, session) => handleUpdateLead(req, e, ctx, session, Number(leadMatch[1])))(request, env);
-		}
-		if (leadMatch && method === "DELETE") {
-			return requireAuth((req, e, ctx, session) => handleDeleteLead(req, e, ctx, session, Number(leadMatch[1])))(request, env);
-		}
-
-		if (pathname === "/api/crm/settings" && method === "GET") {
-			return requireAuth(handleGetSettings)(request, env);
-		}
-		if (pathname === "/api/crm/settings" && method === "PATCH") {
-			return requireAuth(handleUpdateSettings)(request, env);
-		}
-		if (pathname === "/api/crm/settings/test" && method === "POST") {
-			return requireAuth(handleTestEmail)(request, env);
-		}
-
-		if (pathname === "/api/crm/stages" && method === "GET") {
-			return requireAuth(handleListStages)(request, env);
-		}
-		if (pathname === "/api/crm/stages" && method === "POST") {
-			return requireAuth(handleCreateStage)(request, env);
-		}
-		if (pathname === "/api/crm/stages/reorder" && method === "PATCH") {
-			return requireAuth(handleReorderStages)(request, env);
-		}
-		const stageMatch = pathname.match(/^\/api\/crm\/stages\/(\d+)$/);
-		if (stageMatch && method === "PATCH") {
-			return requireAuth((req, e, ctx, session) => handleUpdateStage(req, e, ctx, session, Number(stageMatch[1])))(request, env);
-		}
-		if (stageMatch && method === "DELETE") {
-			return requireAuth((req, e, ctx, session) => handleDeleteStage(req, e, ctx, session, Number(stageMatch[1])))(request, env);
-		}
-
-		return env.ASSETS.fetch(request);
 	},
 };
+
+async function route(request, env, ctx) {
+	const url = new URL(request.url);
+	const { pathname } = url;
+	const method = request.method;
+
+	if (method === "OPTIONS") {
+		return new Response(null, { headers: CORS_HEADERS });
+	}
+
+	if (pathname === "/api/lead" && method === "POST") {
+		return handleLead(request, env, ctx);
+	}
+
+	if (pathname === "/api/contact" && method === "POST") {
+		return handleContact(request, env);
+	}
+
+	if (pathname === "/api/leadster-webhook" && method === "POST") {
+		return handleLeadsterWebhook(request, env, ctx, url);
+	}
+
+	if (pathname === "/api/crm/login" && method === "POST") {
+		return handleLogin(request, env);
+	}
+	if (pathname === "/api/crm/logout" && method === "POST") {
+		return handleLogout();
+	}
+	if (pathname === "/api/crm/me" && method === "GET") {
+		const session = await getSession(request, env);
+		return session ? json({ ok: true, username: session.u }) : json({ ok: false }, 401);
+	}
+
+	if (pathname === "/api/crm/leads" && method === "GET") {
+		return requireAuth(handleListLeads)(request, env);
+	}
+	const leadMatch = pathname.match(/^\/api\/crm\/leads\/(\d+)$/);
+	if (leadMatch && method === "PATCH") {
+		return requireAuth((req, e, ctx, session) => handleUpdateLead(req, e, ctx, session, Number(leadMatch[1])))(request, env);
+	}
+	if (leadMatch && method === "DELETE") {
+		return requireAuth((req, e, ctx, session) => handleDeleteLead(req, e, ctx, session, Number(leadMatch[1])))(request, env);
+	}
+
+	if (pathname === "/api/crm/settings" && method === "GET") {
+		return requireAuth(handleGetSettings)(request, env);
+	}
+	if (pathname === "/api/crm/settings" && method === "PATCH") {
+		return requireAuth(handleUpdateSettings)(request, env);
+	}
+	if (pathname === "/api/crm/settings/test" && method === "POST") {
+		return requireAuth(handleTestEmail)(request, env);
+	}
+
+	if (pathname === "/api/crm/stages" && method === "GET") {
+		return requireAuth(handleListStages)(request, env);
+	}
+	if (pathname === "/api/crm/stages" && method === "POST") {
+		return requireAuth(handleCreateStage)(request, env);
+	}
+	if (pathname === "/api/crm/stages/reorder" && method === "PATCH") {
+		return requireAuth(handleReorderStages)(request, env);
+	}
+	const stageMatch = pathname.match(/^\/api\/crm\/stages\/(\d+)$/);
+	if (stageMatch && method === "PATCH") {
+		return requireAuth((req, e, ctx, session) => handleUpdateStage(req, e, ctx, session, Number(stageMatch[1])))(request, env);
+	}
+	if (stageMatch && method === "DELETE") {
+		return requireAuth((req, e, ctx, session) => handleDeleteStage(req, e, ctx, session, Number(stageMatch[1])))(request, env);
+	}
+
+	return env.ASSETS.fetch(request);
+}
