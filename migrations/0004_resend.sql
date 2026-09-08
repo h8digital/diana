@@ -10,5 +10,5 @@ DELETE FROM settings WHERE key IN (
 );
 
 INSERT INTO settings (key, value) VALUES
-	('resend_from', 'Diana Dutra Investimentos <naoresponda@infodianainvestimentos.com.br>')
+	('resend_from', 'Diana Dutra Investimentos <naoresponda@info.dianainvestimentos.com.br>')
 ON CONFLICT(key) DO NOTHING;
