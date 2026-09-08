@@ -20,9 +20,15 @@ CREATE TABLE IF NOT EXISTS leads (
 
 CREATE INDEX IF NOT EXISTS idx_leads_stage ON leads(stage_id);
 
-INSERT INTO stages (name, position) VALUES
-	('Novo', 1),
-	('Em contato', 2),
-	('Qualificado', 3),
-	('Fechado', 4),
-	('Perdido', 5);
+-- Only seed the default stages when the table is empty, so re-running this
+-- migration (e.g. the first time `wrangler d1 migrations apply` succeeds against
+-- a DB whose tables were created by other means) never duplicates them.
+INSERT INTO stages (name, position)
+SELECT name, position FROM (
+	SELECT 'Novo' AS name, 1 AS position
+	UNION ALL SELECT 'Em contato', 2
+	UNION ALL SELECT 'Qualificado', 3
+	UNION ALL SELECT 'Fechado', 4
+	UNION ALL SELECT 'Perdido', 5
+)
+WHERE NOT EXISTS (SELECT 1 FROM stages);
