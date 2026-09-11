@@ -8,7 +8,7 @@ export const siteConfig = {
 		number: '5551999181068',
 		message: 'Olá Diana, vim através do site e gostaria de tirar algumas dúvidas, pode me ajudar?',
 	},
-	email: 'contato@dianadutrainvestimentos.com.br',
+	email: 'contato@dianainvestimentos.com.br',
 	phoneDisplay: '(51) 99918-1068',
 	address: {
 		line1: 'Rua Ereda Weber, 143',
