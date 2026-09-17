@@ -200,44 +200,21 @@ async function copyToClipboard(value: string, btn: HTMLButtonElement): Promise<v
 	}, 1200);
 }
 
-function copyRow(field: string, value: string, label: string, textClass: string): string {
-	return `
-		<div class="flex items-center gap-1">
-			<p class="min-w-0 flex-1 truncate ${textClass}">${escapeHtml(value)}</p>
-			<button
-				type="button"
-				draggable="false"
-				data-copy-field="${field}"
-				title="Copiar ${label}"
-				aria-label="Copiar ${label}"
-				class="copy-btn shrink-0 rounded p-1 text-navy-soft/50 transition-colors hover:bg-navy/5 hover:text-navy"
-			>${COPY_ICON}</button>
-		</div>
-	`;
-}
-
 function renderCard(lead: Lead): HTMLElement {
 	const card = document.createElement('div');
 	card.className = 'cursor-grab rounded-xl border border-navy/10 bg-white p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing';
 	card.draggable = true;
 	card.dataset.leadId = String(lead.id);
 	card.innerHTML = `
-		${copyRow('name', lead.name, 'nome', 'text-sm font-semibold text-navy')}
-		${copyRow('phone', lead.phone, 'telefone', 'text-xs text-navy-soft')}
-		${lead.email ? copyRow('email', lead.email, 'e-mail', 'text-xs text-navy-soft/80') : ''}
+		<p class="text-sm font-semibold text-navy">${escapeHtml(lead.name)}</p>
+		<p class="mt-1 text-xs text-navy-soft">${escapeHtml(lead.phone)}</p>
+		${lead.email ? `<p class="text-xs text-navy-soft/80">${escapeHtml(lead.email)}</p>` : ''}
 		<div class="mt-2 flex flex-wrap items-center gap-1.5">
 			${lead.objective ? `<span class="inline-block rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-gold-deep">${escapeHtml(lead.objective)}</span>` : ''}
 			${lead.value > 0 ? `<span class="inline-block rounded-full bg-navy/5 px-2 py-0.5 text-[11px] font-semibold text-navy">${formatBRL(lead.value)}</span>` : ''}
 		</div>
 		<p class="mt-2 text-[11px] text-navy-soft/70">${formatDate(lead.created_at)}</p>
 	`;
-	const copyValues: Record<string, string> = { name: lead.name, phone: lead.phone, email: lead.email || '' };
-	card.querySelectorAll<HTMLButtonElement>('[data-copy-field]').forEach((btn) => {
-		btn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			copyToClipboard(copyValues[btn.dataset.copyField ?? ''] ?? '', btn);
-		});
-	});
 	card.addEventListener('dragstart', (e) => {
 		e.dataTransfer?.setData('text/lead-id', String(lead.id));
 		card.classList.add('opacity-40');
@@ -298,6 +275,13 @@ async function deleteStage(stage: Stage): Promise<void> {
 
 // ---------- lead modal ----------
 
+function wireCopyButton(id: string, value: string): void {
+	const btn = document.getElementById(id) as HTMLButtonElement | null;
+	if (!btn) return;
+	btn.classList.toggle('hidden', !value);
+	btn.onclick = () => copyToClipboard(value, btn);
+}
+
 function openLeadModal(lead: Lead): void {
 	currentLeadId = lead.id;
 	$('crm-modal-name').textContent = lead.name;
@@ -307,6 +291,9 @@ function openLeadModal(lead: Lead): void {
 	$<HTMLAnchorElement>('crm-modal-whatsapp').href = whatsappLink(lead.phone);
 	$<HTMLInputElement>('crm-modal-value').value = lead.value ? maskCurrencyInput(String(Math.round(lead.value * 100))) : '';
 	$<HTMLTextAreaElement>('crm-modal-notes').value = lead.notes || '';
+	wireCopyButton('crm-modal-copy-name', lead.name);
+	wireCopyButton('crm-modal-copy-phone', lead.phone);
+	wireCopyButton('crm-modal-copy-email', lead.email || '');
 	$('crm-lead-modal').classList.remove('hidden');
 	$('crm-lead-modal').classList.add('flex');
 }
