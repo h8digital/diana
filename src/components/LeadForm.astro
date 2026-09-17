@@ -156,8 +156,18 @@ import { COUNTRIES, DEFAULT_COUNTRY_ISO } from '../scripts/countries';
 		});
 		phoneInput.addEventListener('input', validatePhoneField);
 		phoneInput.addEventListener('blur', validatePhoneField);
-		emailInput.addEventListener('input', validateEmailField);
-		emailInput.addEventListener('blur', validateEmailField);
+
+		// Só passa a travar o campo depois que o usuário digitou algo — assim quem
+		// só passa o foco pelo campo sem preenchê-lo ainda consegue seguir em frente.
+		let emailTouched = false;
+		emailInput.addEventListener('input', () => {
+			emailTouched = true;
+			validateEmailField();
+		});
+		emailInput.addEventListener('blur', () => {
+			const isValid = validateEmailField();
+			if (emailTouched && !isValid) emailInput.focus();
+		});
 
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
