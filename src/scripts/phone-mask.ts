@@ -10,10 +10,14 @@ export function maskBrPhone(rawValue: string): string {
 	return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 }
 
-export function attachPhoneMask(input: HTMLInputElement): void {
+export function maskGenericPhone(rawValue: string): string {
+	return rawValue.replace(/\D/g, '').slice(0, 14);
+}
+
+export function attachPhoneMask(input: HTMLInputElement, isBrazil: () => boolean): void {
 	input.addEventListener('input', () => {
 		const cursorFromEnd = input.value.length - (input.selectionStart ?? input.value.length);
-		input.value = maskBrPhone(input.value);
+		input.value = isBrazil() ? maskBrPhone(input.value) : maskGenericPhone(input.value);
 		const newPos = input.value.length - cursorFromEnd;
 		input.setSelectionRange(newPos, newPos);
 	});

@@ -28,13 +28,19 @@ function onlyDigits(value) {
 	return (value || "").replace(/\D/g, "");
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+
 function normalizeBrPhone(raw) {
 	const digits = onlyDigits(raw);
 	if (!digits) return "";
+	// Números novos chegam com o código do país embutido (ex.: "+5551999181068",
+	// vindo do seletor de país do formulário). Só assumimos Brasil por padrão
+	// para leads antigos, que não tinham essa informação.
+	if (String(raw || "").trim().startsWith("+")) return digits;
 	return digits.startsWith("55") ? digits : "55" + digits;
 }
 
-async function sendMetaConversion(env, { eventName, eventId, name, phone, objective, fbp, fbc, pageUrl, request, testEventCode }) {
+async function sendMetaConversion(env, { eventName, eventId, name, phone, email, objective, fbp, fbc, pageUrl, request, testEventCode }) {
 	const settings = await getSettings(env);
 	const tracking = resolveTracking(env, settings);
 	const pixelId = tracking.metaPixel;
@@ -52,6 +58,7 @@ async function sendMetaConversion(env, { eventName, eventId, name, phone, object
 		fbc: fbc || undefined,
 	};
 	if (phoneDigits) userData.ph = [await sha256Hex(phoneDigits)];
+	if (email) userData.em = [await sha256Hex(email)];
 	if (firstName) userData.fn = [await sha256Hex(firstName)];
 	if (lastName) userData.ln = [await sha256Hex(lastName)];
 
@@ -611,17 +618,21 @@ async function handleLead(request, env, ctx) {
 		return json({ ok: false, error: "invalid_json" }, 400);
 	}
 
-	const { eventId, name, phone, objective, fbp, fbc, pageUrl, testEventCode } = body || {};
-	if (!name || !phone) return json({ ok: false, error: "missing_fields" }, 400);
+	const { eventId, name, phone, email, objective, fbp, fbc, pageUrl, testEventCode } = body || {};
+	if (!name || !phone || !email) return json({ ok: false, error: "missing_fields" }, 400);
+	if (!EMAIL_PATTERN.test(email)) return json({ ok: false, error: "invalid_email" }, 400);
+
+	const phoneDigitCount = onlyDigits(phone).length;
+	if (phoneDigitCount < 8 || phoneDigitCount > 15) return json({ ok: false, error: "invalid_phone" }, 400);
 
 	if (env.DB) {
 		try {
 			const firstStage = await env.DB.prepare("SELECT id FROM stages ORDER BY position ASC LIMIT 1").first();
 			if (firstStage) {
 				await env.DB.prepare(
-					"INSERT INTO leads (name, phone, objective, stage_id, page_url, event_id) VALUES (?, ?, ?, ?, ?, ?)"
+					"INSERT INTO leads (name, phone, email, objective, stage_id, page_url, event_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
 				)
-					.bind(name, phone, objective || null, firstStage.id, pageUrl || null, eventId || null)
+					.bind(name, phone, email, objective || null, firstStage.id, pageUrl || null, eventId || null)
 					.run();
 			}
 		} catch (err) {
@@ -629,9 +640,9 @@ async function handleLead(request, env, ctx) {
 		}
 	}
 
-	notifyLeadByEmail(env, ctx, { name, phone, objective, pageUrl, source: "Formulário do site" });
+	notifyLeadByEmail(env, ctx, { name, phone, email, objective, pageUrl, source: "Formulário do site" });
 
-	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, objective, fbp, fbc, pageUrl, request, testEventCode });
+	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, email, objective, fbp, fbc, pageUrl, request, testEventCode });
 	return json({ ok: true, meta: metaResult });
 }
 
@@ -690,9 +701,9 @@ async function handleLeadsterWebhook(request, env, ctx, url) {
 			const firstStage = await env.DB.prepare("SELECT id FROM stages ORDER BY position ASC LIMIT 1").first();
 			if (firstStage) {
 				await env.DB.prepare(
-					"INSERT INTO leads (name, phone, objective, stage_id, notes, page_url, event_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+					"INSERT INTO leads (name, phone, email, objective, stage_id, page_url, event_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
 				)
-					.bind(leadName, phone || "", "leadster", firstStage.id, email ? `Email: ${email}` : null, pageUrl || null, eventId)
+					.bind(leadName, phone || "", email || null, "leadster", firstStage.id, pageUrl || null, eventId)
 					.run();
 			}
 		} catch (err) {
@@ -707,6 +718,7 @@ async function handleLeadsterWebhook(request, env, ctx, url) {
 		eventId,
 		name: leadName,
 		phone,
+		email,
 		objective: "leadster",
 		pageUrl,
 		request,
@@ -833,7 +845,7 @@ function requireAuth(handler) {
 async function handleListLeads(request, env) {
 	if (!env.DB) return json({ ok: false, error: "db_not_configured" }, 500);
 	const { results } = await env.DB.prepare(
-		"SELECT id, name, phone, objective, stage_id, notes, value, page_url, created_at, updated_at FROM leads ORDER BY created_at DESC"
+		"SELECT id, name, phone, email, objective, stage_id, notes, value, page_url, created_at, updated_at FROM leads ORDER BY created_at DESC"
 	).all();
 	return json({ ok: true, leads: results });
 }

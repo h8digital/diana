@@ -10,6 +10,7 @@ interface Lead {
 	id: number;
 	name: string;
 	phone: string;
+	email: string | null;
 	objective: string | null;
 	stage_id: number;
 	notes: string | null;
@@ -40,7 +41,9 @@ function formatDate(iso: string): string {
 
 function whatsappLink(phone: string): string {
 	const digits = phone.replace(/\D/g, '');
-	const full = digits.startsWith('55') ? digits : `55${digits}`;
+	// Leads recentes já chegam com o código do país (ex.: "+5551999181068"), vindo
+	// do seletor de país do formulário. Leads antigos são só o número local do Brasil.
+	const full = phone.trim().startsWith('+') || digits.startsWith('55') ? digits : `55${digits}`;
 	return `https://api.whatsapp.com/send?phone=${full}`;
 }
 
@@ -185,6 +188,7 @@ function renderCard(lead: Lead): HTMLElement {
 	card.innerHTML = `
 		<p class="text-sm font-semibold text-navy">${escapeHtml(lead.name)}</p>
 		<p class="mt-1 text-xs text-navy-soft">${escapeHtml(lead.phone)}</p>
+		${lead.email ? `<p class="text-xs text-navy-soft/80">${escapeHtml(lead.email)}</p>` : ''}
 		<div class="mt-2 flex flex-wrap items-center gap-1.5">
 			${lead.objective ? `<span class="inline-block rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-gold-deep">${escapeHtml(lead.objective)}</span>` : ''}
 			${lead.value > 0 ? `<span class="inline-block rounded-full bg-navy/5 px-2 py-0.5 text-[11px] font-semibold text-navy">${formatBRL(lead.value)}</span>` : ''}
@@ -255,6 +259,7 @@ function openLeadModal(lead: Lead): void {
 	currentLeadId = lead.id;
 	$('crm-modal-name').textContent = lead.name;
 	$('crm-modal-phone').textContent = lead.phone;
+	$('crm-modal-email').textContent = lead.email || '—';
 	$('crm-modal-meta').textContent = `Objetivo: ${lead.objective || '—'} · Recebido em ${formatDate(lead.created_at)}`;
 	$<HTMLAnchorElement>('crm-modal-whatsapp').href = whatsappLink(lead.phone);
 	$<HTMLInputElement>('crm-modal-value').value = lead.value ? maskCurrencyInput(String(Math.round(lead.value * 100))) : '';

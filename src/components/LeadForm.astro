@@ -1,3 +1,7 @@
+---
+import { COUNTRIES, DEFAULT_COUNTRY_ISO } from '../scripts/countries';
+---
+
 <section id="formulario" class="relative bg-mist py-16 md:py-20">
 	<div class="reveal mx-auto max-w-2xl px-6">
 		<div class="rounded-3xl border border-navy/10 bg-white p-8 shadow-xl shadow-navy/5 md:p-10">
@@ -12,24 +16,52 @@
 						name="name"
 						type="text"
 						required
+						autocomplete="name"
 						placeholder="Digite seu nome"
 						class="w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy placeholder:text-navy-soft/70 outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
 					/>
 				</div>
 				<div>
-					<label for="lead-phone" class="sr-only">WhatsApp</label>
+					<label for="lead-email" class="sr-only">E-mail</label>
 					<input
-						id="lead-phone"
-						name="phone"
-						type="tel"
-						inputmode="numeric"
+						id="lead-email"
+						name="email"
+						type="email"
 						required
-						placeholder="(51) 99918-1068"
-						pattern="\(\d{2}\) \d{4,5}-\d{4}"
-						title="Formato: (DDD) 99999-9999"
-						maxlength="15"
+						autocomplete="email"
+						placeholder="Digite seu e-mail"
 						class="w-full rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy placeholder:text-navy-soft/70 outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
 					/>
+					<p data-field-error="email" class="mt-1.5 hidden px-1 text-xs font-medium text-red-600"></p>
+				</div>
+				<div>
+					<label for="lead-phone" class="sr-only">WhatsApp</label>
+					<div class="flex gap-2">
+						<label for="lead-country" class="sr-only">País</label>
+						<select
+							id="lead-country"
+							name="country"
+							required
+							class="w-[100px] shrink-0 appearance-none rounded-xl border border-navy/15 bg-mist/60 px-2 py-3.5 text-center text-sm text-navy outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
+						>
+							{COUNTRIES.map((country) => (
+								<option value={country.iso} selected={country.iso === DEFAULT_COUNTRY_ISO}>
+									{country.flag} +{country.dial}
+								</option>
+							))}
+						</select>
+						<input
+							id="lead-phone"
+							name="phone"
+							type="tel"
+							inputmode="numeric"
+							required
+							autocomplete="tel-national"
+							placeholder="(51) 99918-1068"
+							class="w-full min-w-0 flex-1 rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy placeholder:text-navy-soft/70 outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
+						/>
+					</div>
+					<p data-field-error="phone" class="mt-1.5 hidden px-1 text-xs font-medium text-red-600"></p>
 				</div>
 				<div>
 					<label for="lead-objective" class="sr-only">Seu objetivo</label>
@@ -39,6 +71,7 @@
 						required
 						class="w-full appearance-none rounded-xl border border-navy/15 bg-mist/60 px-4 py-3.5 text-navy outline-none transition-all focus:border-gold-deep focus:bg-white focus:ring-4 focus:ring-gold/25"
 					>
+						<option value="" disabled selected>Selecione seu objetivo</option>
 						<option value="Imóvel">Imóvel</option>
 						<option value="Veículo">Veículo</option>
 						<option value="Investimento">Investimento</option>
@@ -61,18 +94,77 @@
 <script>
 	import { fireLeadTracking, getCookie, uuid } from '../scripts/tracking';
 	import { attachPhoneMask } from '../scripts/phone-mask';
+	import { COUNTRIES, DEFAULT_COUNTRY_ISO } from '../scripts/countries';
+	import { validateEmail, validatePhoneDigits } from '../scripts/lead-validation';
+
+	const ERROR_CLASSES = ['border-red-400', 'focus:border-red-500', 'focus:ring-red-200'];
+	const NORMAL_CLASSES = ['border-navy/15', 'focus:border-gold-deep', 'focus:ring-gold/25'];
 
 	function initLeadForm(): void {
 		const form = document.querySelector<HTMLFormElement>('#lead-form');
 		const status = document.querySelector<HTMLParagraphElement>('[data-form-status]');
 		if (!form || !status) return;
 
+		const countrySelect = form.querySelector<HTMLSelectElement>('#lead-country');
 		const phoneInput = form.querySelector<HTMLInputElement>('#lead-phone');
-		if (phoneInput) attachPhoneMask(phoneInput);
+		const emailInput = form.querySelector<HTMLInputElement>('#lead-email');
+		if (!countrySelect || !phoneInput || !emailInput) return;
+
+		const isBrazil = () => countrySelect.value === DEFAULT_COUNTRY_ISO;
+		const currentDial = () => COUNTRIES.find((c) => c.iso === countrySelect.value)?.dial ?? '55';
+
+		attachPhoneMask(phoneInput, isBrazil);
+
+		function showFieldError(input: HTMLInputElement, message: string | null): void {
+			const errorEl = form?.querySelector<HTMLParagraphElement>(`[data-field-error="${input.name}"]`);
+			if (message) {
+				input.classList.remove(...NORMAL_CLASSES);
+				input.classList.add(...ERROR_CLASSES);
+				if (errorEl) {
+					errorEl.textContent = message;
+					errorEl.classList.remove('hidden');
+				}
+			} else {
+				input.classList.remove(...ERROR_CLASSES);
+				input.classList.add(...NORMAL_CLASSES);
+				if (errorEl) {
+					errorEl.textContent = '';
+					errorEl.classList.add('hidden');
+				}
+			}
+		}
+
+		const validatePhoneField = (): boolean => {
+			const digits = phoneInput.value.replace(/\D/g, '');
+			const message = validatePhoneDigits(digits, isBrazil());
+			phoneInput.setCustomValidity(message ?? '');
+			showFieldError(phoneInput, message);
+			return !message;
+		};
+
+		const validateEmailField = (): boolean => {
+			const message = validateEmail(emailInput.value.trim());
+			emailInput.setCustomValidity(message ?? '');
+			showFieldError(emailInput, message);
+			return !message;
+		};
+
+		countrySelect.addEventListener('change', () => {
+			phoneInput.value = '';
+			validatePhoneField();
+			phoneInput.focus();
+		});
+		phoneInput.addEventListener('input', validatePhoneField);
+		phoneInput.addEventListener('blur', validatePhoneField);
+		emailInput.addEventListener('input', validateEmailField);
+		emailInput.addEventListener('blur', validateEmailField);
 
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
-			if (!form.checkValidity()) {
+
+			const phoneValid = validatePhoneField();
+			const emailValid = validateEmailField();
+			if (!phoneValid || !emailValid || !form.checkValidity()) {
 				form.reportValidity();
 				return;
 			}
@@ -85,7 +177,8 @@
 			const eventId = uuid();
 			const formData = new FormData(form);
 			const name = String(formData.get('name') ?? '');
-			const phone = String(formData.get('phone') ?? '');
+			const email = String(formData.get('email') ?? '').trim();
+			const phone = `+${currentDial()}${phoneInput.value.replace(/\D/g, '')}`;
 			const objective = String(formData.get('objective') ?? '');
 
 			fireLeadTracking(eventId, objective);
@@ -97,6 +190,7 @@
 					body: JSON.stringify({
 						eventId,
 						name,
+						email,
 						phone,
 						objective,
 						fbp: getCookie('_fbp'),
