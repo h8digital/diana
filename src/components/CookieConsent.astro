@@ -1,0 +1,33 @@
+<div
+	data-cookie-consent
+	class="hidden fixed inset-x-0 bottom-0 z-50 border-t border-navy/10 bg-white/95 px-4 py-4 shadow-[0_-8px_30px_rgba(14,24,60,0.12)] backdrop-blur-md sm:px-6"
+	role="dialog"
+	aria-live="polite"
+	aria-label="Preferências de cookies"
+>
+	<div class="mx-auto flex max-w-5xl flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<p class="text-sm leading-relaxed text-navy-soft">
+			Usamos cookies para viabilizar o contato comercial com quem preenche o formulário e com quem visita o site
+			(inclusive para anúncios e remarketing). Você pode aceitar ou recusar os cookies não essenciais. Saiba mais na
+			nossa <a href="/politica-de-privacidade" class="font-semibold text-navy underline underline-offset-2 hover:text-gold-deep">Política de Privacidade</a>.
+		</p>
+		<div class="flex w-full shrink-0 items-center gap-3 sm:w-auto">
+			<button
+				type="button"
+				data-cookie-reject
+				class="flex-1 rounded-xl border border-navy/15 px-4 py-2.5 text-sm font-semibold text-navy transition-colors hover:bg-navy/5 sm:flex-none"
+			>
+				Recusar não essenciais
+			</button>
+			<button
+				type="button"
+				data-cookie-accept
+				class="flex-1 rounded-xl bg-gradient-to-r from-gold to-gold-deep px-4 py-2.5 text-sm font-bold text-navy shadow-md shadow-gold/30 transition-all hover:-translate-y-0.5 hover:shadow-lg sm:flex-none"
+			>
+				Aceitar todos
+			</button>
+		</div>
+	</div>
+</div>
+
+<script src="../scripts/consent.ts"></script>

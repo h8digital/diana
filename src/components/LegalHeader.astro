@@ -1,0 +1,17 @@
+---
+import logoMark from '../assets/images/logo-mark.png';
+import { Image } from 'astro:assets';
+import { siteConfig } from '../lib/site-config';
+---
+
+<header class="border-b border-navy/10 bg-paper/90 backdrop-blur-md">
+	<div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-4">
+		<a href="/" class="flex items-center gap-2.5">
+			<Image src={logoMark} alt="Diana Dutra" class="h-14 w-auto" width={140} height={144} />
+			<span class="text-sm font-bold text-navy sm:text-base">{siteConfig.name}</span>
+		</a>
+		<a href="/" class="shrink-0 text-sm font-semibold text-navy-soft transition-colors hover:text-navy">
+			← Voltar para o site
+		</a>
+	</div>
+</header>

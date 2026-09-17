@@ -1,0 +1,153 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LegalHeader from '../components/LegalHeader.astro';
+import Footer from '../components/Footer.astro';
+import { siteConfig } from '../lib/site-config';
+
+const updated = '17 de setembro de 2026';
+---
+
+<BaseLayout title={`Política de Privacidade | ${siteConfig.name}`} description="Como a Diana Dutra Investimentos coleta, usa e protege os dados de quem preenche o formulário ou visita o site.">
+	<LegalHeader />
+	<main class="mx-auto max-w-3xl px-6 py-14">
+		<h1 class="text-3xl font-bold text-navy">Política de Privacidade</h1>
+		<p class="mt-2 text-sm text-navy-soft">Última atualização: {updated}</p>
+
+		<p class="mt-8 leading-relaxed text-navy-soft">
+			Esta política explica, de forma simples, quais dados o site <strong>{siteConfig.name}</strong> ({siteConfig.url})
+			coleta, para que eles são usados e quais direitos você tem sobre eles, em
+			conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">1. Quem é o controlador dos dados</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			{siteConfig.name}, CNPJ {siteConfig.address.cnpj}, com endereço em {siteConfig.address.line1}, {siteConfig.address.city}, {siteConfig.address.cep}. Representante autorizada HS Consórcios. Contato: <a href={`mailto:${siteConfig.email}`} class="font-semibold text-navy underline underline-offset-2 hover:text-gold-deep">{siteConfig.email}</a> ou {siteConfig.phoneDisplay}.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">2. Para que usamos seus dados</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Os dados coletados neste site são usados <strong>exclusivamente para que a nossa área comercial
+			possa entrar em contato</strong> com:
+		</p>
+		<ul class="mt-3 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li>quem preenche o formulário de simulação, para responder ao pedido de contato; e</li>
+			<li>
+				quem apenas visita o site, por meio de anúncios de remarketing (Google e Meta), para retomar o
+				contato com quem já demonstrou interesse.
+			</li>
+		</ul>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Não vendemos, alugamos nem usamos seus dados para qualquer outra finalidade, como envio de conteúdo
+			de terceiros ou cessão a empresas não relacionadas ao nosso atendimento comercial.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">3. Quais dados coletamos</h2>
+
+		<h3 class="mt-6 text-base font-bold text-navy">3.1 Dados que você nos informa diretamente</h3>
+		<p class="mt-2 leading-relaxed text-navy-soft">Ao preencher o formulário de simulação, coletamos:</p>
+		<ul class="mt-2 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li>Nome</li>
+			<li>E-mail</li>
+			<li>Telefone/WhatsApp (com o código do país)</li>
+			<li>Objetivo declarado (imóvel, veículo ou investimento)</li>
+			<li>Página do site em que o formulário foi enviado</li>
+		</ul>
+		<p class="mt-2 leading-relaxed text-navy-soft">
+			Esses dados também podem chegar até nós pelo widget de chat da Leadster, quando você conversa com
+			ele no site, ou diretamente pelo WhatsApp.
+		</p>
+
+		<h3 class="mt-6 text-base font-bold text-navy">3.2 Dados coletados por cookies e ferramentas de navegação</h3>
+		<p class="mt-2 leading-relaxed text-navy-soft">
+			Somente com o seu consentimento, dado no banner de cookies exibido no site, usamos as seguintes
+			ferramentas, que podem coletar endereço IP, identificadores de dispositivo/cookie, páginas
+			visitadas e ações realizadas (como clicar no botão do WhatsApp ou enviar o formulário):
+		</p>
+		<ul class="mt-2 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li><strong>Google Analytics 4</strong> — estatísticas de navegação no site.</li>
+			<li><strong>Google Ads</strong> — mensuração de resultado de campanhas e remarketing.</li>
+			<li>
+				<strong>Meta Pixel e Conversions API (Facebook/Instagram Ads)</strong> — mensuração de campanhas
+				e remarketing. Quando você preenche o formulário ou clica no WhatsApp, seu nome, telefone e
+				e-mail são enviados à Meta de forma criptografada (hash), apenas para associar a conversão ao
+				anúncio correspondente — a Meta não recebe esses dados em texto claro.
+			</li>
+			<li><strong>Leadster (chat/neurolead)</strong> — widget de chat e geração de leads.</li>
+		</ul>
+		<p class="mt-2 leading-relaxed text-navy-soft">
+			Se você recusar os cookies não essenciais, nenhuma dessas ferramentas é carregada — apenas os
+			dados que você mesmo enviar pelo formulário são coletados, para o único fim de contato comercial.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">4. Com quem compartilhamos os dados</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">Compartilhamos dados apenas com prestadores de serviço que nos ajudam a operar o site e o atendimento comercial, sempre na medida necessária:</p>
+		<ul class="mt-3 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li><strong>Cloudflare</strong> — hospedagem do site e do banco de dados de leads.</li>
+			<li><strong>Resend</strong> — envio do e-mail de aviso para a área comercial quando um lead chega.</li>
+			<li><strong>Leadster</strong> — widget de chat e captação de leads no site.</li>
+			<li><strong>Google LLC e Meta Platforms, Inc.</strong> — apenas se você consentir com cookies de análise/publicidade.</li>
+			<li><strong>HS Consórcios</strong> — administradora de consórcios que representamos, quando necessário para dar andamento ao seu atendimento.</li>
+		</ul>
+		<p class="mt-3 leading-relaxed text-navy-soft">Não compartilhamos seus dados com nenhuma outra empresa ou finalidade além das listadas acima.</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">5. Base legal</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Tratamos os dados do formulário com base na execução de procedimentos preliminares a pedido do
+			titular (art. 7º, V, da LGPD) — afinal, é você quem solicita o contato. Já os cookies de análise e
+			publicidade são tratados com base no seu <strong>consentimento</strong> (art. 7º, I), que pode ser
+			dado ou revogado a qualquer momento pelo banner de cookies ou pelo link "Preferências de cookies" no
+			rodapé do site.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">6. Por quanto tempo guardamos os dados</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Os dados do formulário ficam armazenados enquanto durar o relacionamento comercial ou até que você
+			solicite a exclusão, o que ocorrer primeiro. Dados de cookies seguem o prazo de retenção padrão de
+			cada ferramenta (Google e Meta), respeitado o prazo máximo legal.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">7. Seus direitos</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">Nos termos do art. 18 da LGPD, você pode, a qualquer momento, solicitar:</p>
+		<ul class="mt-3 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li>confirmação de que tratamos seus dados e acesso a eles;</li>
+			<li>correção de dados incompletos, inexatos ou desatualizados;</li>
+			<li>anonimização, bloqueio ou eliminação de dados desnecessários;</li>
+			<li>portabilidade dos dados a outro fornecedor;</li>
+			<li>eliminação dos dados tratados com base no seu consentimento;</li>
+			<li>informação sobre com quem compartilhamos seus dados; e</li>
+			<li>revogação do consentimento, a qualquer momento.</li>
+		</ul>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Para exercer qualquer um desses direitos, escreva para <a href={`mailto:${siteConfig.email}`} class="font-semibold text-navy underline underline-offset-2 hover:text-gold-deep">{siteConfig.email}</a>.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">8. Segurança</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			O site é servido por HTTPS e os dados de leads ficam em um banco de dados com acesso restrito à
+			equipe autorizada, protegido por autenticação. Apesar dos cuidados, nenhum sistema é 100% imune a
+			incidentes; caso ocorra algum que afete seus dados, você será informado conforme exige a lei.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">9. Cookies</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">Usamos duas categorias de cookies:</p>
+		<ul class="mt-3 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li><strong>Necessários</strong> — mantêm o site funcionando (ex.: sessão de login da equipe no painel interno). Não podem ser desativados porque o site não depende de rastreamento para isso.</li>
+			<li><strong>Análise e publicidade</strong> — Google Analytics 4, Google Ads, Meta Pixel e o chat da Leadster, descritos na seção 3.2. Só são ativados se você aceitar no banner.</li>
+		</ul>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Você pode mudar sua escolha a qualquer momento pelo link <strong>"Preferências de cookies"</strong> no rodapé do site,
+			ou bloqueando cookies diretamente nas configurações do seu navegador.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">10. Alterações desta política</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Podemos atualizar esta política para refletir mudanças no site ou na legislação. A data no topo
+			desta página indica a versão mais recente.
+		</p>
+
+		<p class="mt-10 leading-relaxed text-navy-soft">
+			Consulte também nossos <a href="/termos-de-uso" class="font-semibold text-navy underline underline-offset-2 hover:text-gold-deep">Termos de Uso</a>.
+		</p>
+	</main>
+	<Footer />
+</BaseLayout>

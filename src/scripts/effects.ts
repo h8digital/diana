@@ -1,4 +1,5 @@
 import { getCookie, uuid } from './tracking';
+import { hasMarketingConsent } from './consent';
 
 export {};
 
@@ -282,6 +283,7 @@ function setupWhatsAppContactTracking(): void {
 					fbp: getCookie('_fbp'),
 					fbc: getCookie('_fbc'),
 					pageUrl: window.location.href,
+					marketingConsent: hasMarketingConsent(),
 				}),
 			}).catch(() => {});
 		},

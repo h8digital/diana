@@ -96,6 +96,7 @@ import { COUNTRIES, DEFAULT_COUNTRY_ISO } from '../scripts/countries';
 	import { attachPhoneMask } from '../scripts/phone-mask';
 	import { COUNTRIES, DEFAULT_COUNTRY_ISO } from '../scripts/countries';
 	import { validateEmail, validatePhoneDigits } from '../scripts/lead-validation';
+	import { hasMarketingConsent } from '../scripts/consent';
 
 	const ERROR_CLASSES = ['border-red-400', 'focus:border-red-500', 'focus:ring-red-200'];
 	const NORMAL_CLASSES = ['border-navy/15', 'focus:border-gold-deep', 'focus:ring-gold/25'];
@@ -206,6 +207,7 @@ import { COUNTRIES, DEFAULT_COUNTRY_ISO } from '../scripts/countries';
 						fbp: getCookie('_fbp'),
 						fbc: getCookie('_fbc'),
 						pageUrl: window.location.href,
+						marketingConsent: hasMarketingConsent(),
 					}),
 				});
 

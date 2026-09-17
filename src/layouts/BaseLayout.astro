@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { siteConfig, whatsappUrl } from '../lib/site-config';
+import CookieConsent from '../components/CookieConsent.astro';
 
 interface Props {
 	title?: string;
@@ -62,8 +63,11 @@ const {
 		    Pixel conforme a config do CRM. Sem marcador (CRM), nada é injetado. */}
 		{enableTracking && <meta name="x-diana-track" content="1" />}
 
+		{/* Só define a função — o widget de chat da Leadster passa a ser carregado
+		    depois do consentimento de cookies (ver CookieConsent.astro / consent.ts),
+		    não mais automaticamente. */}
 		{enableTracking && (
-			<script set:html={`(function(a,b,c,d){try{var e=b.head||b.getElementsByTagName("head")[0];var f=b.createElement("script");f.setAttribute("src",c);f.setAttribute("charset","UTF-8");f.defer=true;a.neuroleadId=d;e.appendChild(f)}catch(g){}})(window,document,"https://cdn.leadster.com.br/neurolead/neurolead.min.js","3o7evP5I2AoCrJDRWjjEPXWEk")`} />
+			<script set:html={`window.__loadLeadsterWidget=function(){if(window.__leadsterLoaded)return;window.__leadsterLoaded=true;(function(a,b,c,d){try{var e=b.head||b.getElementsByTagName("head")[0];var f=b.createElement("script");f.setAttribute("src",c);f.setAttribute("charset","UTF-8");f.defer=true;a.neuroleadId=d;e.appendChild(f)}catch(g){}})(window,document,"https://cdn.leadster.com.br/neurolead/neurolead.min.js","3o7evP5I2AoCrJDRWjjEPXWEk")}`} />
 		)}
 
 		{/* Cores da marca configuráveis no CRM (/crm/config). Servido pelo Worker
@@ -76,11 +80,12 @@ const {
 
 		{showWhatsApp && (
 			<a
+				id="whatsapp-fab"
 				href={whatsappUrl()}
 				target="_blank"
 				rel="noopener"
 				aria-label="Falar no WhatsApp"
-				class="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105"
+				class="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/20 transition-[transform,bottom] hover:scale-105"
 			>
 				<span class="absolute inset-0 rounded-full animate-ping bg-[#25d366]/60"></span>
 				<svg viewBox="0 0 32 32" class="relative h-7 w-7 fill-white">
@@ -88,6 +93,8 @@ const {
 				</svg>
 			</a>
 		)}
+
+		{enableTracking && <CookieConsent />}
 
 		<script src="../scripts/effects.ts"></script>
 	</body>

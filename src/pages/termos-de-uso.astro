@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LegalHeader from '../components/LegalHeader.astro';
+import Footer from '../components/Footer.astro';
+import { siteConfig } from '../lib/site-config';
+
+const updated = '17 de setembro de 2026';
+---
+
+<BaseLayout title={`Termos de Uso | ${siteConfig.name}`} description="Condições de uso do site da Diana Dutra Investimentos.">
+	<LegalHeader />
+	<main class="mx-auto max-w-3xl px-6 py-14">
+		<h1 class="text-3xl font-bold text-navy">Termos de Uso</h1>
+		<p class="mt-2 text-sm text-navy-soft">Última atualização: {updated}</p>
+
+		<p class="mt-8 leading-relaxed text-navy-soft">
+			Estes termos regulam o uso do site <strong>{siteConfig.name}</strong> ({siteConfig.url}), mantido
+			por {siteConfig.name}, CNPJ {siteConfig.address.cnpj}, representante autorizada HS Consórcios. Ao
+			usar o site, você concorda com estas condições.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">1. Objeto do site</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			O site tem finalidade institucional e informativa: apresentar a atuação da {siteConfig.name} em
+			estratégias com consórcios para construção e alavancagem de patrimônio, e permitir que
+			interessados solicitem uma simulação gratuita ou entrem em contato com a nossa área comercial.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">2. Natureza das simulações</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			As informações e simulações apresentadas no site têm caráter <strong>ilustrativo</strong> e não
+			constituem oferta vinculante, proposta comercial fechada ou contrato de consórcio. Condições
+			definitivas — valores, prazos, taxas e parcelas — são apresentadas pela nossa equipe comercial
+			após contato direto, e a contratação do consórcio segue as regras da administradora responsável
+			(HS Consórcios), sujeitas à legislação do Banco Central do Brasil.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">3. Cadastro no formulário</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Ao preencher o formulário do site, você declara que as informações fornecidas (nome, e-mail e
+			telefone) são verdadeiras e atualizadas, e autoriza o contato da nossa área comercial pelos meios
+			informados, inclusive por WhatsApp. O uso desses dados segue nossa <a href="/politica-de-privacidade" class="font-semibold text-navy underline underline-offset-2 hover:text-gold-deep">Política de Privacidade</a>.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">4. Uso adequado do site</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">Ao usar o site, você concorda em não:</p>
+		<ul class="mt-3 list-disc space-y-1 pl-5 leading-relaxed text-navy-soft">
+			<li>fornecer dados falsos ou de terceiros sem autorização no formulário de contato;</li>
+			<li>tentar acessar áreas restritas do site (como o painel interno) sem autorização;</li>
+			<li>usar o site de forma que prejudique seu funcionamento ou o de terceiros.</li>
+		</ul>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">5. Propriedade intelectual</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Textos, imagens, logotipos e demais conteúdos do site pertencem à {siteConfig.name} ou são usados
+			sob licença (como a marca HS Consórcios) e não podem ser reproduzidos, distribuídos ou usados
+			comercialmente sem autorização prévia.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">6. Links e serviços de terceiros</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			O site contém links para serviços de terceiros, como WhatsApp e Google Maps, e utiliza ferramentas
+			de terceiros (Google, Meta, Leadster) descritas na nossa Política de Privacidade. Não nos
+			responsabilizamos pelo conteúdo ou pelas práticas de privacidade desses serviços externos.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">7. Limitação de responsabilidade</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Fazemos o possível para manter o site disponível e as informações atualizadas, mas não garantimos
+			operação ininterrupta ou isenta de erros. As decisões financeiras tomadas com base nas informações
+			do site são de responsabilidade exclusiva do usuário, que deve confirmar condições definitivas
+			diretamente com nossa equipe antes de qualquer contratação.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">8. Alterações destes termos</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Podemos atualizar estes termos a qualquer momento, para refletir mudanças no site ou na
+			legislação. A data no topo desta página indica a versão mais recente.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">9. Legislação e foro</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Estes termos são regidos pela legislação brasileira. Eventuais controvérsias serão submetidas ao
+			foro do domicílio do consumidor, nos termos do Código de Defesa do Consumidor.
+		</p>
+
+		<h2 class="mt-10 text-xl font-bold text-navy">10. Contato</h2>
+		<p class="mt-3 leading-relaxed text-navy-soft">
+			Dúvidas sobre estes termos podem ser enviadas para <a href={`mailto:${siteConfig.email}`} class="font-semibold text-navy underline underline-offset-2 hover:text-gold-deep">{siteConfig.email}</a> ou {siteConfig.phoneDisplay}.
+		</p>
+	</main>
+	<Footer />
+</BaseLayout>

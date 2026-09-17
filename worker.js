@@ -263,35 +263,40 @@ function resolveTracking(env, settings) {
 }
 
 // HTML injetado no <head> das páginas públicas (substitui o marcador
-// <meta name="x-diana-track">). Mantém o mesmo formato do BaseLayout antigo:
-// carrega o gtag.js, inicializa GA4/Ads e o Meta Pixel, e publica
-// window.__TRACKING_IDS__ para os scripts do site (tracking.ts / effects.ts).
+// <meta name="x-diana-track">). Publica window.__TRACKING_IDS__ e uma função
+// window.__loadTrackingScripts() que só é chamada depois que o visitante
+// aceita cookies no banner de consentimento (ver CookieConsent.astro /
+// consent.ts) — nada é carregado do Google/Meta antes disso (LGPD).
 function buildTrackingHead(t) {
 	if (!t.enabled) return "";
-	const out = [];
+	if (!t.ga4 && !t.adsId && !t.metaPixel) return "";
+
 	const loaderId = t.ga4 || t.adsId;
+	const gadsTarget = t.adsId && t.adsLabel ? `${t.adsId}/${t.adsLabel}` : t.adsId;
+	const body = [];
+
 	if (loaderId) {
-		const gadsTarget = t.adsId && t.adsLabel ? `${t.adsId}/${t.adsLabel}` : t.adsId;
-		out.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(loaderId)}"></script>`);
-		out.push(
-			"<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;" +
-				"gtag('js',new Date());" +
+		body.push(
+			`var gs=d.createElement('script');gs.async=true;gs.src='https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(loaderId)}';d.head.appendChild(gs);` +
+				"w.dataLayer=w.dataLayer||[];function gtag(){dataLayer.push(arguments)}w.gtag=gtag;gtag('js',new Date());" +
 				(t.ga4 ? `gtag('config','${jsStrSafe(t.ga4)}');` : "") +
-				(t.adsId ? `gtag('config','${jsStrSafe(t.adsId)}');` : "") +
-				`window.__TRACKING_IDS__={ga4:'${jsStrSafe(t.ga4)}',gads:'${jsStrSafe(gadsTarget)}',fbPixel:'${jsStrSafe(t.metaPixel)}'};</script>`
+				(t.adsId ? `gtag('config','${jsStrSafe(t.adsId)}');` : "")
 		);
 	}
 	if (t.metaPixel) {
-		out.push(
-			"<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?" +
+		body.push(
+			"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?" +
 				"n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;" +
 				"n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];" +
-				"s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');" +
-				`fbq('init','${jsStrSafe(t.metaPixel)}');fbq('track','PageView');</script>` +
-				`<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${encodeURIComponent(t.metaPixel)}&ev=PageView&noscript=1"/></noscript>`
+				"s.parentNode.insertBefore(t,s)}(w,d,'script','https://connect.facebook.net/en_US/fbevents.js');" +
+				`fbq('init','${jsStrSafe(t.metaPixel)}');fbq('track','PageView');`
 		);
 	}
-	return out.join("");
+
+	return (
+		`<script>window.__TRACKING_IDS__={ga4:'${jsStrSafe(t.ga4)}',gads:'${jsStrSafe(gadsTarget)}',fbPixel:'${jsStrSafe(t.metaPixel)}'};` +
+		`window.__loadTrackingScripts=function(){if(window.__trackingLoaded)return;window.__trackingLoaded=true;var w=window,d=document;${body.join("")}};</script>`
+	);
 }
 
 // Cache curto por isolate: a config muda raramente e não vale um SELECT por página.
@@ -618,7 +623,7 @@ async function handleLead(request, env, ctx) {
 		return json({ ok: false, error: "invalid_json" }, 400);
 	}
 
-	const { eventId, name, phone, email, objective, fbp, fbc, pageUrl, testEventCode } = body || {};
+	const { eventId, name, phone, email, objective, fbp, fbc, pageUrl, testEventCode, marketingConsent } = body || {};
 	if (!name || !phone || !email) return json({ ok: false, error: "missing_fields" }, 400);
 	if (!EMAIL_PATTERN.test(email)) return json({ ok: false, error: "invalid_email" }, 400);
 
@@ -640,9 +645,15 @@ async function handleLead(request, env, ctx) {
 		}
 	}
 
+	// A ficha do lead é salva e o e-mail comercial é enviado sempre (é a
+	// finalidade principal, a pedido do próprio titular ao preencher o
+	// formulário). O envio à Meta Conversions API só acontece se o visitante
+	// consentiu com cookies de análise/publicidade no banner.
 	notifyLeadByEmail(env, ctx, { name, phone, email, objective, pageUrl, source: "Formulário do site" });
 
-	const metaResult = await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, email, objective, fbp, fbc, pageUrl, request, testEventCode });
+	const metaResult = marketingConsent
+		? await sendMetaConversion(env, { eventName: "Lead", eventId, name, phone, email, objective, fbp, fbc, pageUrl, request, testEventCode })
+		: { ok: false, error: "consent_denied" };
 	return json({ ok: true, meta: metaResult });
 }
 
@@ -654,17 +665,19 @@ async function handleContact(request, env) {
 		return json({ ok: false, error: "invalid_json" }, 400);
 	}
 
-	const { eventId, fbp, fbc, pageUrl, source, testEventCode } = body || {};
-	const metaResult = await sendMetaConversion(env, {
-		eventName: "Contact",
-		eventId,
-		objective: source,
-		fbp,
-		fbc,
-		pageUrl,
-		request,
-		testEventCode,
-	});
+	const { eventId, fbp, fbc, pageUrl, source, testEventCode, marketingConsent } = body || {};
+	const metaResult = marketingConsent
+		? await sendMetaConversion(env, {
+				eventName: "Contact",
+				eventId,
+				objective: source,
+				fbp,
+				fbc,
+				pageUrl,
+				request,
+				testEventCode,
+			})
+		: { ok: false, error: "consent_denied" };
 	return json({ ok: true, meta: metaResult });
 }
 
