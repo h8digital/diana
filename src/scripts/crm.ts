@@ -180,21 +180,64 @@ function escapeHtml(str: string): string {
 	return div.innerHTML;
 }
 
+const COPY_ICON =
+	'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+const CHECK_ICON =
+	'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+async function copyToClipboard(value: string, btn: HTMLButtonElement): Promise<void> {
+	if (!value) return;
+	try {
+		await navigator.clipboard.writeText(value);
+	} catch {
+		return;
+	}
+	btn.innerHTML = CHECK_ICON;
+	btn.classList.add('text-emerald-600');
+	window.setTimeout(() => {
+		btn.innerHTML = COPY_ICON;
+		btn.classList.remove('text-emerald-600');
+	}, 1200);
+}
+
+function copyRow(field: string, value: string, label: string, textClass: string): string {
+	return `
+		<div class="flex items-center gap-1">
+			<p class="min-w-0 flex-1 truncate ${textClass}">${escapeHtml(value)}</p>
+			<button
+				type="button"
+				draggable="false"
+				data-copy-field="${field}"
+				title="Copiar ${label}"
+				aria-label="Copiar ${label}"
+				class="copy-btn shrink-0 rounded p-1 text-navy-soft/50 transition-colors hover:bg-navy/5 hover:text-navy"
+			>${COPY_ICON}</button>
+		</div>
+	`;
+}
+
 function renderCard(lead: Lead): HTMLElement {
 	const card = document.createElement('div');
 	card.className = 'cursor-grab rounded-xl border border-navy/10 bg-white p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing';
 	card.draggable = true;
 	card.dataset.leadId = String(lead.id);
 	card.innerHTML = `
-		<p class="text-sm font-semibold text-navy">${escapeHtml(lead.name)}</p>
-		<p class="mt-1 text-xs text-navy-soft">${escapeHtml(lead.phone)}</p>
-		${lead.email ? `<p class="text-xs text-navy-soft/80">${escapeHtml(lead.email)}</p>` : ''}
+		${copyRow('name', lead.name, 'nome', 'text-sm font-semibold text-navy')}
+		${copyRow('phone', lead.phone, 'telefone', 'text-xs text-navy-soft')}
+		${lead.email ? copyRow('email', lead.email, 'e-mail', 'text-xs text-navy-soft/80') : ''}
 		<div class="mt-2 flex flex-wrap items-center gap-1.5">
 			${lead.objective ? `<span class="inline-block rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-gold-deep">${escapeHtml(lead.objective)}</span>` : ''}
 			${lead.value > 0 ? `<span class="inline-block rounded-full bg-navy/5 px-2 py-0.5 text-[11px] font-semibold text-navy">${formatBRL(lead.value)}</span>` : ''}
 		</div>
 		<p class="mt-2 text-[11px] text-navy-soft/70">${formatDate(lead.created_at)}</p>
 	`;
+	const copyValues: Record<string, string> = { name: lead.name, phone: lead.phone, email: lead.email || '' };
+	card.querySelectorAll<HTMLButtonElement>('[data-copy-field]').forEach((btn) => {
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			copyToClipboard(copyValues[btn.dataset.copyField ?? ''] ?? '', btn);
+		});
+	});
 	card.addEventListener('dragstart', (e) => {
 		e.dataTransfer?.setData('text/lead-id', String(lead.id));
 		card.classList.add('opacity-40');
